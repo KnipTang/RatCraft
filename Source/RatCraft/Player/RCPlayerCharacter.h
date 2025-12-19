@@ -30,7 +30,10 @@ private:
 private:
 	void HandleMoveInput(const struct FInputActionValue& InputActionValue);
 	void HandleLookInput(const struct FInputActionValue& InputActionValue);
-	
+	void HandleMineInput(const struct FInputActionValue& InputActionValue);
+
+	class ARCBlock* FindInteractableBlock();
+
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputMappingContext* GameplayInputMappingContext;
 	//Actions
@@ -40,4 +43,6 @@ private:
 	class UInputAction* LookInputAction;
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputAction* JumpInputAction;
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	class UInputAction* MineInputAction;
 };

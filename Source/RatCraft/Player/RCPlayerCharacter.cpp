@@ -7,6 +7,9 @@
 #include "EnhancedInputSubsystems.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "RatCraft/Abilities/RCAbilitySystemStatics.h"
+#include "RatCraft/Interactables/RCInteractable.h"
+#include "RatCraft/World/RCBlock.h"
 
 ARCPlayerCharacter::ARCPlayerCharacter()
 {
@@ -55,6 +58,7 @@ void ARCPlayerCharacter::SetupPlayerInputComponent(class UInputComponent* Player
 		EnhancedInputComp->BindAction(MoveInputAction, ETriggerEvent::Triggered, this, &ARCPlayerCharacter::HandleMoveInput);
 		EnhancedInputComp->BindAction(LookInputAction, ETriggerEvent::Triggered, this, &ARCPlayerCharacter::HandleLookInput);
 		EnhancedInputComp->BindAction(JumpInputAction, ETriggerEvent::Triggered, this, &ARCPlayerCharacter::Jump);
+		EnhancedInputComp->BindAction(MineInputAction, ETriggerEvent::Triggered, this, &ARCPlayerCharacter::HandleMineInput);
 	}
 }
 
@@ -77,4 +81,49 @@ void ARCPlayerCharacter::HandleLookInput(const struct FInputActionValue& InputAc
 
 	AddControllerPitchInput(-InputVal.Y);
 	AddControllerYawInput(InputVal.X);
+}
+
+void ARCPlayerCharacter::HandleMineInput(const struct FInputActionValue& InputActionValue)
+{
+	const bool bPressed = InputActionValue.Get<bool>();
+
+	if (bPressed)
+	{
+		ARCBlock* block = FindInteractableBlock();
+		if (block)
+		{
+			FString blockName = block->GetName();
+			UE_LOG(LogTemp, Display, TEXT("Block found: %s"), *blockName);
+    
+			// Alternative if you want to use the actor's label (more user-friendly)
+			// FString blockLabel = block->GetActorLabel();
+			// UE_LOG(LogTemp, Display, TEXT("Block found: %s"), *blockLabel);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("No interactable block found"));
+		}
+	}
+	else //Released
+	{
+		
+	}
+}
+
+class ARCBlock* ARCPlayerCharacter::FindInteractableBlock()
+{
+	const FHitResult HitResult = URCAbilitySystemStatics::GetHitscanTarget(
+		GetWorld(),
+		ViewCam->GetComponentLocation(),
+		ViewCam->GetComponentRotation(),
+		ECC_WorldStatic,
+		1000
+		);
+
+	AActor* PossibleInteractableActor = HitResult.GetActor();
+	if (ARCBlock* InteractableBlock = Cast<ARCBlock>(PossibleInteractableActor))
+	{
+		return InteractableBlock;
+	}
+	return nullptr;
 }
