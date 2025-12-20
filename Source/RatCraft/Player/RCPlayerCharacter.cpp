@@ -8,8 +8,10 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "RatCraft/Abilities/RCAbilitySystemStatics.h"
+#include "RatCraft/Framework/RCGameModeBase.h"
 #include "RatCraft/Interactables/RCInteractable.h"
-#include "RatCraft/World/RCBlock.h"
+#include "RatCraft/World/Blocks/RCBlock.h"
+#include "RatCraft/World/Grid/RCGrid.h"
 
 ARCPlayerCharacter::ARCPlayerCharacter()
 {
@@ -33,6 +35,16 @@ ARCPlayerCharacter::ARCPlayerCharacter()
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	GetCharacterMovement()->RotationRate = FRotator( 0.0f,720.0f,0.0f );
+}
+
+void ARCPlayerCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (ARCBlock* LookAtBlock = FindInteractableBlock(); LookAtBlock != CurrentlyLookedAtBlock)
+	{
+		LookAtBlockChanged(LookAtBlock);
+	}
 }
 
 void ARCPlayerCharacter::PawnClientRestart()
@@ -59,6 +71,7 @@ void ARCPlayerCharacter::SetupPlayerInputComponent(class UInputComponent* Player
 		EnhancedInputComp->BindAction(LookInputAction, ETriggerEvent::Triggered, this, &ARCPlayerCharacter::HandleLookInput);
 		EnhancedInputComp->BindAction(JumpInputAction, ETriggerEvent::Triggered, this, &ARCPlayerCharacter::Jump);
 		EnhancedInputComp->BindAction(MineInputAction, ETriggerEvent::Triggered, this, &ARCPlayerCharacter::HandleMineInput);
+		EnhancedInputComp->BindAction(PlaceInputAction, ETriggerEvent::Triggered, this, &ARCPlayerCharacter::HandlePlaceInput);
 	}
 }
 
@@ -87,27 +100,65 @@ void ARCPlayerCharacter::HandleMineInput(const struct FInputActionValue& InputAc
 {
 	const bool bPressed = InputActionValue.Get<bool>();
 
+	if (!CurrentlyLookedAtBlock)
+		return;
+	
 	if (bPressed)
 	{
-		ARCBlock* block = FindInteractableBlock();
-		if (block)
-		{
-			FString blockName = block->GetName();
-			UE_LOG(LogTemp, Display, TEXT("Block found: %s"), *blockName);
-    
-			// Alternative if you want to use the actor's label (more user-friendly)
-			// FString blockLabel = block->GetActorLabel();
-			// UE_LOG(LogTemp, Display, TEXT("Block found: %s"), *blockLabel);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("No interactable block found"));
-		}
+		if (!CurrentlyLookedAtBlock->IsMining())
+			CurrentlyLookedAtBlock->OnInteract();
 	}
 	else //Released
 	{
-		
+		CurrentlyLookedAtBlock->EndInteract();
 	}
+}
+
+void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputActionValue)
+{
+	const bool bPressed = InputActionValue.Get<bool>();
+
+	if (!CurrentlyLookedAtBlock)
+		return;
+	
+	if (bPressed)
+	{
+		if (AGameModeBase* GameMode = GetWorld()->GetAuthGameMode())
+		{
+			if (ARCGameModeBase* RCGameModeBase = Cast<ARCGameModeBase>(GameMode))
+			{
+				ARCGrid* Grid = RCGameModeBase->GetGrid();
+
+				const FVector GridCoordsNewBlock = CurrentlyLookedAtBlock->GetGridCoordinates() + LookAtBlockNormal;
+				
+				Grid->SpawnCube(GridCoordsNewBlock);
+			}
+		}
+	}
+}
+
+void ARCPlayerCharacter::LookAtBlockChanged(class ARCBlock* NewBlock)
+{
+	if (CurrentlyLookedAtBlock && CurrentlyLookedAtBlock->IsMining())
+		CurrentlyLookedAtBlock->EndInteract();
+	
+	CurrentlyLookedAtBlock = NewBlock;
+}
+
+void ARCPlayerCharacter::GetBlockFaceFromNormal(const FVector& HitNormal)
+{
+	if (HitNormal.Z == 1)
+		LookAtBlockFace = EBlockFace::Top;
+	else if (HitNormal.Z == -1)
+		LookAtBlockFace = EBlockFace::Bottom;
+	else if (HitNormal.X == 1)
+		LookAtBlockFace = EBlockFace::North;
+	else if (HitNormal.X == -1)
+		LookAtBlockFace = EBlockFace::South;
+	else if (HitNormal.Y == 1)
+		LookAtBlockFace = EBlockFace::East;
+	else if (HitNormal.Y == -1)
+		LookAtBlockFace = EBlockFace::West;
 }
 
 class ARCBlock* ARCPlayerCharacter::FindInteractableBlock()
@@ -117,12 +168,14 @@ class ARCBlock* ARCPlayerCharacter::FindInteractableBlock()
 		ViewCam->GetComponentLocation(),
 		ViewCam->GetComponentRotation(),
 		ECC_WorldStatic,
-		1000
+		400
 		);
 
 	AActor* PossibleInteractableActor = HitResult.GetActor();
 	if (ARCBlock* InteractableBlock = Cast<ARCBlock>(PossibleInteractableActor))
 	{
+		LookAtBlockNormal = HitResult.ImpactNormal;
+		
 		return InteractableBlock;
 	}
 	return nullptr;

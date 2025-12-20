@@ -16,4 +16,14 @@ class RATCRAFT_API ARCGameModeBase : public AGameModeBase
 
 public:
 	ARCGameModeBase();
+
+	virtual void BeginPlay() override;
+
+	class ARCGrid* GetGrid() const { return Grid; };
+private:
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class ARCGrid> GridClass;
+
+	UPROPERTY()
+	class ARCGrid* Grid;
 };
