@@ -40,15 +40,17 @@ public:
 	void InitGrid();
 	ARCBlock* SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords);
 
+	FVector GetGridCoordsFromWorldPosition(const FVector& WorldPosition) const;
+
+	bool CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords) const;
 private:
 	float GetNoiseHeightAt(int X, int Z);
 	
 	TArray<float> GeneratePerlinNoise();
 	
-	TSubclassOf<class ARCBlock> GetBlockClassByType(const EBlockType BlockType);
 	FGridCell& GetGridCellFromCoords(const FVector& Coords);
 
-	TMap<FVector, FGridCell> GridCells;
+	TMap<FVector /*Coords*/, FGridCell> GridCells;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
 	int LengthElement;
@@ -63,7 +65,7 @@ private:
 	float GridScale = 0.1f;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Blocks")
-	TMap<EBlockType, TSubclassOf<class ARCBlock>> BlockClasses;
+	TSubclassOf<class ARCBlock> BlockClass;
 
 	TArray<float> PerlinNoise;
 };

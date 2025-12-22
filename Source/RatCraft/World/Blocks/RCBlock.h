@@ -31,7 +31,7 @@ public:
 	 */
 	ARCBlock();
 
-	void Init(const FVector& GridCoords);
+	void Init(const EBlockType BlockTypeToSpawn, const FVector& GridCoords);
 
 	void UpdateMiningProgress();
 	virtual void OnInteract() override;
@@ -46,7 +46,8 @@ private:
 	void StopMining();
 	void OnBlockMined();
 
-	void CreateBlock();
+	void CreateBlock(const EBlockType BlockTypeToSpawn);
+	void ConfigureBlock(const EBlockType BlockTypeToSpawn);
 	
 	UPROPERTY(EditDefaultsOnly)
 	class UStaticMeshComponent* StaticMesh;

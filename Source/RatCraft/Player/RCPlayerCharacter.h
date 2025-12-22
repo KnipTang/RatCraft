@@ -18,6 +18,7 @@ class RATCRAFT_API ARCPlayerCharacter : public ARCCharacter
 public:
 	ARCPlayerCharacter();
 
+	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 
 	virtual void PawnClientRestart() override;
@@ -35,7 +36,7 @@ private:
 	void HandleLookInput(const struct FInputActionValue& InputActionValue);
 	void HandleMineInput(const struct FInputActionValue& InputActionValue);
 	void HandlePlaceInput(const struct FInputActionValue& InputActionValue);
-
+	
 	void LookAtBlockChanged(class ARCBlock* NewBlock);
 	class ARCBlock* FindInteractableBlock();
 	UPROPERTY()
@@ -44,6 +45,11 @@ private:
 	void GetBlockFaceFromNormal(const FVector& HitNormal);
 	EBlockFace LookAtBlockFace;
 	FVector LookAtBlockNormal;
+
+	UPROPERTY()
+	TWeakObjectPtr<class ARCGrid> GridRef;
+	FVector PlayerGridCoords;
+	
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputMappingContext* GameplayInputMappingContext;

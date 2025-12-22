@@ -38,6 +38,20 @@ ARCPlayerCharacter::ARCPlayerCharacter()
 	GetCharacterMovement()->RotationRate = FRotator( 0.0f,720.0f,0.0f );
 }
 
+void ARCPlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (AGameModeBase* GameMode = GetWorld()->GetAuthGameMode())
+	{
+		if (ARCGameModeBase* RCGameModeBase = Cast<ARCGameModeBase>(GameMode))
+		{
+			GridRef = RCGameModeBase->GetGrid();
+		}
+	}
+	PlayerGridCoords = GridRef->GetGridCoordsFromWorldPosition(GetActorLocation());
+}
+
 void ARCPlayerCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -87,6 +101,8 @@ void ARCPlayerCharacter::HandleMoveInput(const struct FInputActionValue& InputAc
 	const FVector LookRightDir = ViewCam->GetRightVector();
 	const FVector MoveForwardDir = FVector::CrossProduct(LookRightDir, FVector::UpVector);
 	AddMovementInput(MoveForwardDir * InputVal.Y + LookRightDir * InputVal.X);
+
+	PlayerGridCoords = GridRef->GetGridCoordsFromWorldPosition(GetActorLocation());
 }
 
 void ARCPlayerCharacter::HandleLookInput(const struct FInputActionValue& InputActionValue)
@@ -124,16 +140,11 @@ void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputA
 	
 	if (bPressed)
 	{
-		if (AGameModeBase* GameMode = GetWorld()->GetAuthGameMode())
+		const FVector GridCoordsNewBlock = CurrentlyLookedAtBlock->GetGridCoordinates() + LookAtBlockNormal;
+		
+		if (GridRef->CanSpawnBlockAtGridCoords(GridCoordsNewBlock, PlayerGridCoords))
 		{
-			if (ARCGameModeBase* RCGameModeBase = Cast<ARCGameModeBase>(GameMode))
-			{
-				ARCGrid* Grid = RCGameModeBase->GetGrid();
-
-				const FVector GridCoordsNewBlock = CurrentlyLookedAtBlock->GetGridCoordinates() + LookAtBlockNormal;
-				
-				//URCWorldManager::SpawnCube(GetWorld(), Grid, BlockClass, GridCoordsNewBlock);
-			}
+			GridRef->SpawnBlock(EBlockType::Grass, GridCoordsNewBlock);
 		}
 	}
 }

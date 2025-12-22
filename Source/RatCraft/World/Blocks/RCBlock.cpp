@@ -5,7 +5,6 @@
 
 #include "KismetProceduralMeshLibrary.h"
 #include "ProceduralMeshComponent.h"
-#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ARCBlock::ARCBlock()
@@ -18,13 +17,14 @@ ARCBlock::ARCBlock()
 	//StaticMesh->SetupAttachment(GetRootComponent());
 
 	ProceduralMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("ProceduralMesh"));
+	ProceduralMesh->SetCollisionResponseToAllChannels(ECR_Block);
 	RootComponent = ProceduralMesh;
 }
 
-void ARCBlock::Init(const FVector& GridCoords)
+void ARCBlock::Init(const EBlockType BlockTypeToSpawn, const FVector& GridCoords)
 {
 	GridCoordinates = GridCoords;
-	CreateBlock();
+	CreateBlock(BlockTypeToSpawn);
 }
 
 void ARCBlock::OnInteract()
@@ -85,11 +85,10 @@ void ARCBlock::StopMining()
 void ARCBlock::OnBlockMined()
 {
 	StopMining();
-	UE_LOG(LogTemp, Warning, TEXT("BlockGotMined"));
-	StaticMesh->SetVisibility(false);
+	ConfigureBlock(EBlockType::Air);
 }
 
-void ARCBlock::CreateBlock()
+void ARCBlock::CreateBlock(const EBlockType BlockTypeToSpawn)
 {
 	TArray<FVector> Vertices;
 	TArray<int32> Triangles;
@@ -161,7 +160,23 @@ void ARCBlock::CreateBlock()
     }
 	
 	UKismetProceduralMeshLibrary::CalculateTangentsForMesh(Vertices, Triangles, UVs, Normals, Tangents);
-	
 	ProceduralMesh->CreateMeshSection(0, Vertices, Triangles, Normals, UVs, VertexColors, Tangents, true);
+
+	ConfigureBlock(BlockTypeToSpawn);
+}
+
+void ARCBlock::ConfigureBlock(const EBlockType BlockTypeToSpawn)
+{
+	switch (BlockTypeToSpawn)
+	{
+		case EBlockType::Air:
+			ProceduralMesh->SetVisibility(false);
+			ProceduralMesh->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
+		break;
+		case EBlockType::Grass:
+			ProceduralMesh->SetVisibility(true);
+			ProceduralMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		break;
+	}
 }
 

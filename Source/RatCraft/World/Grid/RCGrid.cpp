@@ -31,11 +31,13 @@ void ARCGrid::InitGrid()
 			
 			for (int Y = 0; Y < TerrainHeight; Y++)
 			{
-				
 				const FVector Coords = FVector(X, Z, Y);
-				ARCBlock* NewBlock = SpawnBlock(EBlockType::Grass, Coords);
-				FGridCell NewCell = FGridCell(Coords, NewBlock);
-				GridCells.Add(Coords, NewCell);
+				SpawnBlock(EBlockType::Grass, Coords);
+			}
+			for (int Y = TerrainHeight; Y < GridHeight; Y++)
+			{
+				const FVector Coords = FVector(X, Z, Y);
+				SpawnBlock(EBlockType::Air, Coords);
 			}
 		}
 	}
@@ -43,8 +45,6 @@ void ARCGrid::InitGrid()
 
 ARCBlock* ARCGrid::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords)
 {
-	const TSubclassOf<ARCBlock> BlockClass = GetBlockClassByType(BlockTypeToSpawn);
-	
 	const FVector WorldSpawnLocation = GridCoords * LengthElement;
 
 	FActorSpawnParameters SpawnParams;
@@ -56,13 +56,37 @@ ARCBlock* ARCGrid::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& 
 		FRotator::ZeroRotator, 
 		SpawnParams
 	);
+	
 
 	if (!NewBlock)
 		return nullptr;
 
-	NewBlock->Init(GridCoords);
+	NewBlock->Init(BlockTypeToSpawn, GridCoords);
+
+	FGridCell NewCell = FGridCell(GridCoords, NewBlock);
+	GridCells.Add(GridCoords, NewCell);
 
 	return NewBlock;
+}
+
+FVector ARCGrid::GetGridCoordsFromWorldPosition(const FVector& WorldPosition) const
+{
+	return WorldPosition / LengthElement;
+}
+
+bool ARCGrid::CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords) const
+{
+	const float Distance = 
+		FMath::Abs(NewBlockGridCoords.X - PlayerGridCoords.X) +
+		FMath::Abs(NewBlockGridCoords.Y - PlayerGridCoords.Y) +
+		FMath::Abs(NewBlockGridCoords.Z - PlayerGridCoords.Z);
+    
+	if (Distance <= 1.5f)
+	{
+		return false;
+	}
+    
+	return true;
 }
 
 float ARCGrid::GetNoiseHeightAt(int X, int Z)
@@ -83,11 +107,6 @@ float ARCGrid::GetNoiseHeightAt(int X, int Z)
 TArray<float> ARCGrid::GeneratePerlinNoise()
 {
 	return URCPerlinNoise::GenerateHeightMap(GridWidth, GridDepth, GridScale, FVector2D());
-}
-
-TSubclassOf<class ARCBlock> ARCGrid::GetBlockClassByType(const EBlockType BlockType)
-{
-	return BlockClasses.FindChecked(BlockType);
 }
 
 FGridCell& ARCGrid::GetGridCellFromCoords(const FVector& Coords)
