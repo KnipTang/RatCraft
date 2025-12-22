@@ -140,7 +140,7 @@ void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputA
 {
 	const bool bPressed = InputActionValue.Get<bool>();
 
-	if (!CurrentlyLookedAtBlock)
+	if (!bCanPlaceBlock || !CurrentlyLookedAtBlock)
 		return;
 	
 	if (bPressed)
@@ -149,7 +149,22 @@ void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputA
 		
 		if (GridRef->CanSpawnBlockAtGridCoords(GridCoordsNewBlock, PlayerGridCoords, GetCapsuleComponent()->GetScaledCapsuleRadius() / 2.f))
 		{
-			GridRef->SpawnBlock(EBlockType::Grass, GridCoordsNewBlock);
+			bool bSucceeded = GridRef->SpawnBlock(EBlockType::Grass, GridCoordsNewBlock);
+			if (!bSucceeded)
+				return;
+
+			bCanPlaceBlock = false;
+
+			if (UWorld* World = GetWorld())
+				World->GetTimerManager().SetTimer(
+				BlockPlacedTimerHandle,
+				[this]()
+				 {
+					 bCanPlaceBlock = true;
+				 },
+				BlockPlacedCooldown,
+				false
+			);
 		}
 	}
 }

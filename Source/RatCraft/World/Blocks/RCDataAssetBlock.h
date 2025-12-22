@@ -17,7 +17,7 @@ class RATCRAFT_API URCDataAssetBlock : public UPrimaryDataAsset
 
 public:
 	float GetMineTime() const { return MineTime; }
-
+	UMaterialInterface* GetMaterial() const { return Material; }
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
 	UMaterialInterface* Material;

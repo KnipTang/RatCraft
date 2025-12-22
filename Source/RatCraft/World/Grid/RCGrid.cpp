@@ -36,7 +36,7 @@ void ARCGrid::InitGrid()
 	}
 }
 
-ARCBlock* ARCGrid::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords)
+bool ARCGrid::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords)
 {
 	const FVector WorldSpawnLocation = GridCoords * LengthElement;
 
@@ -52,14 +52,14 @@ ARCBlock* ARCGrid::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& 
 	
 
 	if (!NewBlock)
-		return nullptr;
+		return false;
 
-	NewBlock->Init(BlockTypeToSpawn, GridCoords);
+	NewBlock->Init(BlockDataAsset.FindChecked(BlockTypeToSpawn), BlockTypeToSpawn, GridCoords);
 
 	FGridCell NewCell = FGridCell(GridCoords, NewBlock);
-	GridCells.Add(GridCoords, NewCell);
+	AllGridCells.Add(GridCoords, NewCell);
 
-	return NewBlock;
+	return true;
 }
 
 FVector ARCGrid::GetGridCoordsFromWorldPosition(const FVector& WorldPosition) const
@@ -94,7 +94,7 @@ TArray<float> ARCGrid::GeneratePerlinNoise()
 
 FGridCell& ARCGrid::GetGridCellFromCoords(const FVector& Coords)
 {
-	return GridCells.FindChecked(Coords);
+	return AllGridCells.FindChecked(Coords);
 }
 
 bool ARCGrid::IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const 

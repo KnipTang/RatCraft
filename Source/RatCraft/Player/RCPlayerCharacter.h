@@ -39,19 +39,6 @@ private:
 	void HandleMineInput(const struct FInputActionValue& InputActionValue);
 	void HandlePlaceInput(const struct FInputActionValue& InputActionValue);
 	
-	void LookAtBlockChanged(class ARCBlock* NewBlock);
-	class ARCBlock* FindInteractableBlock();
-	UPROPERTY()
-	class ARCBlock* CurrentlyLookedAtBlock;
-
-	void GetBlockFaceFromNormal(const FVector& HitNormal);
-	EBlockFace LookAtBlockFace;
-	FVector LookAtBlockNormal;
-
-	UPROPERTY()
-	TWeakObjectPtr<class ARCGrid> GridRef;
-	FVector PlayerGridCoords;
-	
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputMappingContext* GameplayInputMappingContext;
@@ -66,4 +53,25 @@ private:
 	class UInputAction* MineInputAction;
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputAction* PlaceInputAction;
+
+private:
+	void LookAtBlockChanged(class ARCBlock* NewBlock);
+	class ARCBlock* FindInteractableBlock();
+	UPROPERTY()
+	class ARCBlock* CurrentlyLookedAtBlock;
+
+	void GetBlockFaceFromNormal(const FVector& HitNormal);
+	EBlockFace LookAtBlockFace;
+	FVector LookAtBlockNormal;
+
+	UPROPERTY()
+	TWeakObjectPtr<class ARCGrid> GridRef;
+	FVector PlayerGridCoords;
+
+	//Place block
+	bool bCanPlaceBlock = true;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	float BlockPlacedCooldown = 0.1f;
+	FTimerHandle BlockPlacedTimerHandle;
 };

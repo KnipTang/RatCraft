@@ -38,7 +38,7 @@ public:
 	int GetElementLength() const { return LengthElement; }
 
 	void InitGrid();
-	ARCBlock* SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords);
+	bool SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords);
 
 	FVector GetGridCoordsFromWorldPosition(const FVector& WorldPosition) const;
 
@@ -53,7 +53,10 @@ private:
 
 	EBlockType GetBlockTypeFromHeight(const int TerrainHeight, const int BlockHeight) const;
 	
-	TMap<FVector /*Coords*/, FGridCell> GridCells;
+	TMap<FVector /*Coords*/, FGridCell> AllGridCells;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Blocks")
+	TMap<EBlockType, class URCDataAssetBlock*> BlockDataAsset;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
 	int LengthElement;

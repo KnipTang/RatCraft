@@ -5,6 +5,7 @@
 
 #include "KismetProceduralMeshLibrary.h"
 #include "ProceduralMeshComponent.h"
+#include "RCDataAssetBlock.h"
 
 // Sets default values
 ARCBlock::ARCBlock()
@@ -12,23 +13,22 @@ ARCBlock::ARCBlock()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-	//StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
-	//StaticMesh->SetCollisionObjectType(ECC_WorldStatic);
-	//StaticMesh->SetupAttachment(GetRootComponent());
-
 	ProceduralMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("ProceduralMesh"));
 	ProceduralMesh->SetCollisionResponseToAllChannels(ECR_Block);
 	RootComponent = ProceduralMesh;
 }
 
-void ARCBlock::Init(const EBlockType BlockTypeToSpawn, const FVector& GridCoords)
+void ARCBlock::Init(class URCDataAssetBlock* DataAsset, const EBlockType BlockTypeToSpawn, const FVector& GridCoords)
 {
+	DataAssetBlock = DataAsset;
 	GridCoordinates = GridCoords;
 
 	if (GridCoordinates.Z != 0)
 		bIsMinable = true;
-	
-	CreateBlock(BlockTypeToSpawn);
+
+	if(BlockTypeToSpawn != EBlockType::Air)
+		CreateMesh(BlockTypeToSpawn);
+	ConfigureBlock(BlockTypeToSpawn);
 }
 
 void ARCBlock::OnInteract()
@@ -66,7 +66,7 @@ void ARCBlock::UpdateMiningProgress()
 	UE_LOG(LogTemp, Warning, TEXT("%f"), 
 		CurrentMinedTime);
 	
-	if (CurrentMinedTime >= MineTime)
+	if (CurrentMinedTime >= DataAssetBlock->GetMineTime())
 	{
 		OnBlockMined();
 	}
@@ -90,7 +90,7 @@ void ARCBlock::OnBlockMined()
 	ConfigureBlock(EBlockType::Air);
 }
 
-void ARCBlock::CreateBlock(const EBlockType BlockTypeToSpawn)
+void ARCBlock::CreateMesh(const EBlockType BlockTypeToSpawn)
 {
 	TArray<FVector> Vertices;
 	TArray<int32> Triangles;
@@ -164,12 +164,10 @@ void ARCBlock::CreateBlock(const EBlockType BlockTypeToSpawn)
 	UKismetProceduralMeshLibrary::CalculateTangentsForMesh(Vertices, Triangles, UVs, Normals, Tangents);
 	ProceduralMesh->CreateMeshSection(0, Vertices, Triangles, Normals, UVs, VertexColors, Tangents, true);
 
-	if (Material)
+	if (UMaterialInterface* Material = DataAssetBlock->GetMaterial())
 	{
 		ProceduralMesh->SetMaterial(0, Material);
 	}
-	
-	ConfigureBlock(BlockTypeToSpawn);
 }
 
 void ARCBlock::ConfigureBlock(const EBlockType BlockTypeToSpawn)

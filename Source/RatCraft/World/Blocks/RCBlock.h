@@ -31,7 +31,7 @@ public:
 	 */
 	ARCBlock();
 
-	void Init(const EBlockType BlockTypeToSpawn, const FVector& GridCoords);
+	void Init(class URCDataAssetBlock* DataAsset, const EBlockType BlockTypeToSpawn, const FVector& GridCoords);
 
 	void UpdateMiningProgress();
 	virtual void OnInteract() override;
@@ -46,32 +46,22 @@ private:
 	void StopMining();
 	void OnBlockMined();
 
-	void CreateBlock(const EBlockType BlockTypeToSpawn);
+	void CreateMesh(const EBlockType BlockTypeToSpawn);
 	void ConfigureBlock(const EBlockType BlockTypeToSpawn);
 
 	FColor GetBlockColorFromBlockType(const EBlockType BlockTypeToSpawn);
-	
-	UPROPERTY(EditDefaultsOnly)
-	class UStaticMeshComponent* StaticMesh;
 
 	UPROPERTY(VisibleAnywhere)
 	class UProceduralMeshComponent* ProceduralMesh;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Material")
-	UMaterialInterface* Material;
 	
+	UPROPERTY()
+	class URCDataAssetBlock* DataAssetBlock;
+	
+	FVector GridCoordinates;
 	float BlockLength = 100;
-
-	//UPROPERTY(EditDefaultsOnly, Category = "Config")
-	//const class URCDataAssetBlock * DataAssetBlock;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
 	EBlockType BlockType = EBlockType::Air;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Config")
-	float MineTime;
-	
-	FVector GridCoordinates;
 	
 	//Mining
 	FTimerHandle MiningTimerHandle;
