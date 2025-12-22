@@ -3,6 +3,7 @@
 
 #include "RCGameModeBase.h"
 
+#include "RatCraft/World/RCWorldGenerator.h"
 #include "RatCraft/World/Grid/RCGrid.h"
 
 ARCGameModeBase::ARCGameModeBase()
@@ -16,10 +17,15 @@ void ARCGameModeBase::BeginPlay()
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	
-	Grid = GetWorld()->SpawnActor<ARCGrid>(
-		GridClass, 
+	WorldGenerator = GetWorld()->SpawnActor<ARCWorldGenerator>(
+		WorldGeneratorClass, 
 		FVector(0, 0, 0), 
 		FRotator::ZeroRotator, 
 		SpawnParams
 	);
+}
+
+class ARCGrid* ARCGameModeBase::GetGrid() const
+{
+	return WorldGenerator->GetGrid();
 }

@@ -10,6 +10,7 @@
 #include "RatCraft/Abilities/RCAbilitySystemStatics.h"
 #include "RatCraft/Framework/RCGameModeBase.h"
 #include "RatCraft/Interactables/RCInteractable.h"
+#include "RatCraft/World/RCWorldManager.h"
 #include "RatCraft/World/Blocks/RCBlock.h"
 #include "RatCraft/World/Grid/RCGrid.h"
 
@@ -131,7 +132,7 @@ void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputA
 
 				const FVector GridCoordsNewBlock = CurrentlyLookedAtBlock->GetGridCoordinates() + LookAtBlockNormal;
 				
-				Grid->SpawnCube(GridCoordsNewBlock);
+				//URCWorldManager::SpawnCube(GetWorld(), Grid, BlockClass, GridCoordsNewBlock);
 			}
 		}
 	}

@@ -13,5 +13,5 @@ class RATCRAFT_API URCAbilitySystemStatics : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
-	static FHitResult GetHitscanTarget(UWorld* World, const FVector& EyesLocation, const FRotator& EyesRotation, ECollisionChannel CollisionType, float LookDistance = 100, bool DebugLine = false);
+	static FHitResult GetHitscanTarget(const UWorld* World, const FVector& EyesLocation, const FRotator& EyesRotation, ECollisionChannel CollisionType, float LookDistance = 100, bool DebugLine = false);
 };

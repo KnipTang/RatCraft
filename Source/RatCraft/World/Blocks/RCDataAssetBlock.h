@@ -25,5 +25,8 @@ private:
 	EBlockType BlockType;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
+	UMaterialInterface* Material;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Config")
 	float MineTime;
 };

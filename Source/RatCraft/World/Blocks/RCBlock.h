@@ -45,15 +45,21 @@ private:
 	void StartMining();
 	void StopMining();
 	void OnBlockMined();
+
+	void CreateBlock();
 	
 	UPROPERTY(EditDefaultsOnly)
 	class UStaticMeshComponent* StaticMesh;
+
+	UPROPERTY(VisibleAnywhere)
+	class UProceduralMeshComponent* ProceduralMesh;
+	float BlockLength = 100;
 
 	//UPROPERTY(EditDefaultsOnly, Category = "Config")
 	//const class URCDataAssetBlock * DataAssetBlock;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
-	EBlockType BlockType;
+	EBlockType BlockType = EBlockType::Air;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
 	float MineTime;

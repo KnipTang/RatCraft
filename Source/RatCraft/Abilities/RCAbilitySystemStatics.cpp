@@ -3,7 +3,7 @@
 
 #include "RCAbilitySystemStatics.h"
 
-FHitResult URCAbilitySystemStatics::GetHitscanTarget(UWorld* World, const FVector& EyesLocation, const FRotator& EyesRotation, ECollisionChannel CollisionType, float LookDistance, bool DebugLine)
+FHitResult URCAbilitySystemStatics::GetHitscanTarget(const UWorld* World, const FVector& EyesLocation, const FRotator& EyesRotation, ECollisionChannel CollisionType, float LookDistance, bool DebugLine)
 {
 	FHitResult HitResult;
 	
