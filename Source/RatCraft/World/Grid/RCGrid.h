@@ -42,14 +42,17 @@ public:
 
 	FVector GetGridCoordsFromWorldPosition(const FVector& WorldPosition) const;
 
-	bool CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords) const;
+	bool CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const;
 private:
 	float GetNoiseHeightAt(int X, int Z);
 	
 	TArray<float> GeneratePerlinNoise();
 	
 	FGridCell& GetGridCellFromCoords(const FVector& Coords);
+	bool IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const;
 
+	EBlockType GetBlockTypeFromHeight(const int TerrainHeight, const int BlockHeight) const;
+	
 	TMap<FVector /*Coords*/, FGridCell> GridCells;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
@@ -63,6 +66,11 @@ private:
 	int GridHeight;
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
 	float GridScale = 0.1f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Config")
+	int SnowLevel = 50.f;
+	UPROPERTY(EditDefaultsOnly, Category = "Config")
+	int RockLevel = 5.f;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Blocks")
 	TSubclassOf<class ARCBlock> BlockClass;

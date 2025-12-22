@@ -24,14 +24,16 @@ ARCBlock::ARCBlock()
 void ARCBlock::Init(const EBlockType BlockTypeToSpawn, const FVector& GridCoords)
 {
 	GridCoordinates = GridCoords;
+
+	if (GridCoordinates.Z != 0)
+		bIsMinable = true;
+	
 	CreateBlock(BlockTypeToSpawn);
 }
 
 void ARCBlock::OnInteract()
 {
-	UE_LOG(LogTemp, Warning, TEXT("ARCBlock::OnInteract"));
-
-	if (!bIsMining)
+	if (bIsMinable && !bIsMining)
 	{
 		StartMining();
 	}
@@ -142,7 +144,7 @@ void ARCBlock::CreateBlock(const EBlockType BlockTypeToSpawn)
             else if (i == 2) UVs.Add(FVector2D(1, 0));
             else UVs.Add(FVector2D(0, 0));
         	
-            VertexColors.Add(FColor::White);
+            VertexColors.Add(GetBlockColorFromBlockType(BlockTypeToSpawn));
         }
     	
         Triangles.Add(BaseIndex);
@@ -162,6 +164,11 @@ void ARCBlock::CreateBlock(const EBlockType BlockTypeToSpawn)
 	UKismetProceduralMeshLibrary::CalculateTangentsForMesh(Vertices, Triangles, UVs, Normals, Tangents);
 	ProceduralMesh->CreateMeshSection(0, Vertices, Triangles, Normals, UVs, VertexColors, Tangents, true);
 
+	if (Material)
+	{
+		ProceduralMesh->SetMaterial(0, Material);
+	}
+	
 	ConfigureBlock(BlockTypeToSpawn);
 }
 
@@ -173,10 +180,30 @@ void ARCBlock::ConfigureBlock(const EBlockType BlockTypeToSpawn)
 			ProceduralMesh->SetVisibility(false);
 			ProceduralMesh->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
 		break;
-		case EBlockType::Grass:
+		default:
 			ProceduralMesh->SetVisibility(true);
 			ProceduralMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		break;
 	}
+}
+
+FColor ARCBlock::GetBlockColorFromBlockType(const EBlockType BlockTypeToSpawn)
+{
+	switch (BlockTypeToSpawn)
+	{
+		case EBlockType::Air:
+			break;
+		case EBlockType::Grass:
+			return FColor::Green;
+			break;
+		case EBlockType::Stone:
+			return FColor::Black;
+			break;
+		case EBlockType::Snow:
+			return FColor::White;
+			break;
+	}
+	
+	return FColor::Purple;
 }
 

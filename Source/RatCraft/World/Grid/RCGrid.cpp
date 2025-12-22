@@ -26,18 +26,11 @@ void ARCGrid::InitGrid()
 			float NoiseHeight = GetNoiseHeightAt(X, Z);
 			int TerrainHeight = FMath::RoundToInt(NoiseHeight * GridHeight);
 			TerrainHeight = FMath::Clamp(TerrainHeight, 1, GridHeight - 1);
-			UE_LOG(LogTemp, Warning, TEXT("TerreinHEight: %d"), 
-			TerrainHeight);
 			
-			for (int Y = 0; Y < TerrainHeight; Y++)
+			for (int Y = 0; Y < GridHeight; Y++)
 			{
 				const FVector Coords = FVector(X, Z, Y);
-				SpawnBlock(EBlockType::Grass, Coords);
-			}
-			for (int Y = TerrainHeight; Y < GridHeight; Y++)
-			{
-				const FVector Coords = FVector(X, Z, Y);
-				SpawnBlock(EBlockType::Air, Coords);
+				SpawnBlock(GetBlockTypeFromHeight(TerrainHeight, Y), Coords);
 			}
 		}
 	}
@@ -74,19 +67,9 @@ FVector ARCGrid::GetGridCoordsFromWorldPosition(const FVector& WorldPosition) co
 	return WorldPosition / LengthElement;
 }
 
-bool ARCGrid::CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords) const
+bool ARCGrid::CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const
 {
-	const float Distance = 
-		FMath::Abs(NewBlockGridCoords.X - PlayerGridCoords.X) +
-		FMath::Abs(NewBlockGridCoords.Y - PlayerGridCoords.Y) +
-		FMath::Abs(NewBlockGridCoords.Z - PlayerGridCoords.Z);
-    
-	if (Distance <= 1.5f)
-	{
-		return false;
-	}
-    
-	return true;
+	return (IsPlayerObstructing(NewBlockGridCoords, PlayerGridCoords, PlayerColliderSize) && NewBlockGridCoords.Z <= GridHeight);
 }
 
 float ARCGrid::GetNoiseHeightAt(int X, int Z)
@@ -112,4 +95,35 @@ TArray<float> ARCGrid::GeneratePerlinNoise()
 FGridCell& ARCGrid::GetGridCellFromCoords(const FVector& Coords)
 {
 	return GridCells.FindChecked(Coords);
+}
+
+bool ARCGrid::IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const 
+{
+	const float Distance = 
+	FMath::Abs(NewBlockGridCoords.X - PlayerGridCoords.X) +
+	FMath::Abs(NewBlockGridCoords.Y - PlayerGridCoords.Y) +
+	FMath::Abs(NewBlockGridCoords.Z - PlayerGridCoords.Z);
+
+	UE_LOG(LogTemp, Warning, TEXT("Distance is %f"), Distance);
+    
+	if (Distance <= 1 + (PlayerColliderSize / LengthElement))
+	{
+		return false;
+	}
+    
+	return true;
+}
+
+EBlockType ARCGrid::GetBlockTypeFromHeight(const int TerrainHeight, const int BlockHeight) const
+{
+	if (BlockHeight > TerrainHeight)
+		return EBlockType::Air;
+	else if (BlockHeight >= TerrainHeight - RockLevel && BlockHeight < SnowLevel)
+		return EBlockType::Grass;
+	else if (BlockHeight < TerrainHeight - RockLevel)
+		return EBlockType::Stone;
+	else if (BlockHeight >= SnowLevel)
+		return EBlockType::Snow;
+	
+	return EBlockType::Air;
 }

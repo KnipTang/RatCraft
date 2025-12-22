@@ -6,6 +6,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "RatCraft/Abilities/RCAbilitySystemStatics.h"
 #include "RatCraft/Framework/RCGameModeBase.h"
@@ -32,10 +33,14 @@ ARCPlayerCharacter::ARCPlayerCharacter()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
-    
-	GetCharacterMovement()->bOrientRotationToMovement = false;
-	GetCharacterMovement()->bUseControllerDesiredRotation = false;
-	GetCharacterMovement()->RotationRate = FRotator( 0.0f,720.0f,0.0f );
+
+	MovementComp = GetCharacterMovement();
+	if (!MovementComp)
+		return;
+	
+	MovementComp->bOrientRotationToMovement = false;
+	MovementComp->bUseControllerDesiredRotation = false;
+	MovementComp->RotationRate = FRotator( 0.0f,720.0f,0.0f );
 }
 
 void ARCPlayerCharacter::BeginPlay()
@@ -49,7 +54,6 @@ void ARCPlayerCharacter::BeginPlay()
 			GridRef = RCGameModeBase->GetGrid();
 		}
 	}
-	PlayerGridCoords = GridRef->GetGridCoordsFromWorldPosition(GetActorLocation());
 }
 
 void ARCPlayerCharacter::Tick(float DeltaSeconds)
@@ -60,6 +64,9 @@ void ARCPlayerCharacter::Tick(float DeltaSeconds)
 	{
 		LookAtBlockChanged(LookAtBlock);
 	}
+
+	if (MovementComp->Velocity != FVector::ZeroVector)
+		PlayerGridCoords = GridRef->GetGridCoordsFromWorldPosition(GetActorLocation());
 }
 
 void ARCPlayerCharacter::PawnClientRestart()
@@ -101,8 +108,6 @@ void ARCPlayerCharacter::HandleMoveInput(const struct FInputActionValue& InputAc
 	const FVector LookRightDir = ViewCam->GetRightVector();
 	const FVector MoveForwardDir = FVector::CrossProduct(LookRightDir, FVector::UpVector);
 	AddMovementInput(MoveForwardDir * InputVal.Y + LookRightDir * InputVal.X);
-
-	PlayerGridCoords = GridRef->GetGridCoordsFromWorldPosition(GetActorLocation());
 }
 
 void ARCPlayerCharacter::HandleLookInput(const struct FInputActionValue& InputActionValue)
@@ -142,7 +147,7 @@ void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputA
 	{
 		const FVector GridCoordsNewBlock = CurrentlyLookedAtBlock->GetGridCoordinates() + LookAtBlockNormal;
 		
-		if (GridRef->CanSpawnBlockAtGridCoords(GridCoordsNewBlock, PlayerGridCoords))
+		if (GridRef->CanSpawnBlockAtGridCoords(GridCoordsNewBlock, PlayerGridCoords, GetCapsuleComponent()->GetScaledCapsuleRadius() / 2.f))
 		{
 			GridRef->SpawnBlock(EBlockType::Grass, GridCoordsNewBlock);
 		}

@@ -27,7 +27,9 @@ public:
 private:
 	UPROPERTY(VisibleDefaultsOnly, Category = "View")
 	class UCameraComponent* ViewCam;
-
+	UPROPERTY()
+	UCharacterMovementComponent* MovementComp;
+	
 	/***************************************************/
 	/*						INPUT						/
 	/***************************************************/

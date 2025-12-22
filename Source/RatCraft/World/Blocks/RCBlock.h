@@ -48,12 +48,18 @@ private:
 
 	void CreateBlock(const EBlockType BlockTypeToSpawn);
 	void ConfigureBlock(const EBlockType BlockTypeToSpawn);
+
+	FColor GetBlockColorFromBlockType(const EBlockType BlockTypeToSpawn);
 	
 	UPROPERTY(EditDefaultsOnly)
 	class UStaticMeshComponent* StaticMesh;
 
 	UPROPERTY(VisibleAnywhere)
 	class UProceduralMeshComponent* ProceduralMesh;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Material")
+	UMaterialInterface* Material;
+	
 	float BlockLength = 100;
 
 	//UPROPERTY(EditDefaultsOnly, Category = "Config")
@@ -75,4 +81,6 @@ private:
 	
 	float CurrentMinedTime;
 	bool bIsMining;
+
+	bool bIsMinable = false;
 };
