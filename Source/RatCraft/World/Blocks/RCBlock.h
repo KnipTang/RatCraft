@@ -9,15 +9,40 @@
 #include "RatCraft/Interactables/RCInteractable.h"
 #include "RCBlock.generated.h"
 
-enum class EBlockFace : uint8
+USTRUCT()
+struct FBlockFaceVisibility
 {
-	None    UMETA(DisplayName = "None"),
-	Top     UMETA(DisplayName = "Top"),
-	Bottom  UMETA(DisplayName = "Bottom"),
-	North   UMETA(DisplayName = "North"),
-	South   UMETA(DisplayName = "South"),
-	East    UMETA(DisplayName = "East"),
-	West    UMETA(DisplayName = "West")
+	GENERATED_BODY()
+	
+public:
+	FBlockFaceVisibility() :
+		Top(false), Bottom(false), North(false), East(false), South(false), West(false) 
+	{}
+	FBlockFaceVisibility(bool InTop, bool InBottom, bool InNorth, bool InEast, bool InSouth, bool InWest) :
+		Top(InTop), Bottom(InBottom), North(InNorth), East(InEast), South(InSouth), West(InWest)
+	{
+		Faces = {South, North, West, East, Top, Bottom};
+	}
+
+	
+	bool Top = false;
+	bool Bottom = false;
+	bool North = false;
+	bool East = false;
+	bool South = false;
+	bool West = false;
+
+	TArray<bool> Faces;
+};
+
+struct FBlockMesh
+{
+	TArray<FVector> Vertices;
+	TArray<int32> Triangles;
+	TArray<FVector> Normals;
+	TArray<FVector2D> UVs;
+	TArray<struct FProcMeshTangent> Tangents;
+	TArray<FColor> VertexColors;
 };
 
 UCLASS()
@@ -31,7 +56,7 @@ public:
 	 */
 	ARCBlock();
 
-	void Init(class URCDataAssetBlock* DataAsset, const EBlockType BlockTypeToSpawn, const FVector& GridCoords);
+	void Init(class URCDataAssetBlock* DataAsset, const EBlockType BlockTypeToSpawn, const FVector& GridCoords, const struct FBlockFaceVisibility InBlockFaceVisibility);
 
 	void UpdateMiningProgress();
 	virtual void OnInteract() override;
@@ -63,6 +88,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
 	EBlockType BlockType = EBlockType::Air;
 	
+	struct FBlockFaceVisibility BlockFaceVisibility;
 	//Mining
 	FTimerHandle MiningTimerHandle;
 

@@ -35,25 +35,28 @@ public:
 	ARCGrid();
 
 	virtual void BeginPlay() override;
-	int GetElementLength() const { return LengthElement; }
 
 	void InitGrid();
-	bool SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords);
+	void RenderGrid();
+	bool SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords, const struct FBlockFaceVisibility BlockFaceVisibility);
 
 	FVector GetGridCoordsFromWorldPosition(const FVector& WorldPosition) const;
+	int GetElementLength() const { return LengthElement; }
 
 	bool CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const;
 private:
 	float GetNoiseHeightAt(int X, int Z);
 	
-	TArray<float> GeneratePerlinNoise();
+	TArray<float> GeneratePerlinNoise() const;
 	
 	FGridCell& GetGridCellFromCoords(const FVector& Coords);
+	bool IsBlockAtCoords(const FVector& Coords) const;
 	bool IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const;
 
 	EBlockType GetBlockTypeFromHeight(const int TerrainHeight, const int BlockHeight) const;
 	
 	TMap<FVector /*Coords*/, FGridCell> AllGridCells;
+	TMap<FVector /*Coords*/, EBlockType> GridTypeMap;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Blocks")
 	TMap<EBlockType, class URCDataAssetBlock*> BlockDataAsset;

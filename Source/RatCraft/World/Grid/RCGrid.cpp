@@ -30,13 +30,33 @@ void ARCGrid::InitGrid()
 			for (int Y = 0; Y < GridHeight; Y++)
 			{
 				const FVector Coords = FVector(X, Z, Y);
-				SpawnBlock(GetBlockTypeFromHeight(TerrainHeight, Y), Coords);
+				GridTypeMap.Add(Coords, GetBlockTypeFromHeight(TerrainHeight, Y));
+				
+				const FBlockFaceVisibility BlockFaceVisibility{true, true, true, true, true, true};
+				SpawnBlock(GetBlockTypeFromHeight(TerrainHeight, Y), Coords,BlockFaceVisibility);
 			}
 		}
 	}
 }
 
-bool ARCGrid::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords)
+void ARCGrid::RenderGrid()
+{
+	for (TPair<FVector /*Coords*/, EBlockType> Element : GridTypeMap)
+	{
+		const bool Top		= IsBlockAtCoords(FVector(Element.Key.X, Element.Key.Y, Element.Key.Z + 1));
+		const bool Bottom	= IsBlockAtCoords(FVector(Element.Key.X, Element.Key.Y, Element.Key.Z - 1));
+		const bool North	= IsBlockAtCoords(FVector(Element.Key.X + 1, Element.Key.Y, Element.Key.Z));
+		const bool South	= IsBlockAtCoords(FVector(Element.Key.X - 1, Element.Key.Y, Element.Key.Z));
+		const bool East		= IsBlockAtCoords(FVector(Element.Key.X, Element.Key.Y + 1, Element.Key.Z));
+		const bool West		= IsBlockAtCoords(FVector(Element.Key.X, Element.Key.Y - 1, Element.Key.Z));
+		
+		const FBlockFaceVisibility BlockFaceVisibility{Top, Bottom, North, South, East, West};
+		
+		SpawnBlock(Element.Value, Element.Key, BlockFaceVisibility);
+	}
+}
+
+bool ARCGrid::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords, const struct FBlockFaceVisibility BlockFaceVisibility)
 {
 	const FVector WorldSpawnLocation = GridCoords * LengthElement;
 
@@ -49,12 +69,11 @@ bool ARCGrid::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridC
 		FRotator::ZeroRotator, 
 		SpawnParams
 	);
-	
 
 	if (!NewBlock)
 		return false;
 
-	NewBlock->Init(BlockDataAsset.FindChecked(BlockTypeToSpawn), BlockTypeToSpawn, GridCoords);
+	NewBlock->Init(BlockDataAsset.FindChecked(BlockTypeToSpawn), BlockTypeToSpawn, GridCoords, BlockFaceVisibility);
 
 	FGridCell NewCell = FGridCell(GridCoords, NewBlock);
 	AllGridCells.Add(GridCoords, NewCell);
@@ -87,7 +106,7 @@ float ARCGrid::GetNoiseHeightAt(int X, int Z)
 	return 0.0f;
 }
 
-TArray<float> ARCGrid::GeneratePerlinNoise()
+TArray<float> ARCGrid::GeneratePerlinNoise() const
 {
 	return URCPerlinNoise::GenerateHeightMap(GridWidth, GridDepth, GridScale, FVector2D());
 }
@@ -95,6 +114,13 @@ TArray<float> ARCGrid::GeneratePerlinNoise()
 FGridCell& ARCGrid::GetGridCellFromCoords(const FVector& Coords)
 {
 	return AllGridCells.FindChecked(Coords);
+}
+
+bool ARCGrid::IsBlockAtCoords(const FVector& Coords) const
+{
+	if (GridTypeMap.FindChecked(Coords) == EBlockType::Air)
+		return false;
+	return true;
 }
 
 bool ARCGrid::IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const 

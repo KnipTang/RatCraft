@@ -149,7 +149,8 @@ void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputA
 		
 		if (GridRef->CanSpawnBlockAtGridCoords(GridCoordsNewBlock, PlayerGridCoords, GetCapsuleComponent()->GetScaledCapsuleRadius() / 2.f))
 		{
-			bool bSucceeded = GridRef->SpawnBlock(EBlockType::Grass, GridCoordsNewBlock);
+			const FBlockFaceVisibility BlockFaceVisibility{true, true, true, true, true, true};
+			bool bSucceeded = GridRef->SpawnBlock(EBlockType::Grass, GridCoordsNewBlock, BlockFaceVisibility);
 			if (!bSucceeded)
 				return;
 
@@ -175,22 +176,6 @@ void ARCPlayerCharacter::LookAtBlockChanged(class ARCBlock* NewBlock)
 		CurrentlyLookedAtBlock->EndInteract();
 	
 	CurrentlyLookedAtBlock = NewBlock;
-}
-
-void ARCPlayerCharacter::GetBlockFaceFromNormal(const FVector& HitNormal)
-{
-	if (HitNormal.Z == 1)
-		LookAtBlockFace = EBlockFace::Top;
-	else if (HitNormal.Z == -1)
-		LookAtBlockFace = EBlockFace::Bottom;
-	else if (HitNormal.X == 1)
-		LookAtBlockFace = EBlockFace::North;
-	else if (HitNormal.X == -1)
-		LookAtBlockFace = EBlockFace::South;
-	else if (HitNormal.Y == 1)
-		LookAtBlockFace = EBlockFace::East;
-	else if (HitNormal.Y == -1)
-		LookAtBlockFace = EBlockFace::West;
 }
 
 class ARCBlock* ARCPlayerCharacter::FindInteractableBlock()

@@ -59,9 +59,7 @@ private:
 	class ARCBlock* FindInteractableBlock();
 	UPROPERTY()
 	class ARCBlock* CurrentlyLookedAtBlock;
-
-	void GetBlockFaceFromNormal(const FVector& HitNormal);
-	EBlockFace LookAtBlockFace;
+	
 	FVector LookAtBlockNormal;
 
 	UPROPERTY()

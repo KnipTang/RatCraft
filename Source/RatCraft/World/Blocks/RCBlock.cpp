@@ -18,11 +18,12 @@ ARCBlock::ARCBlock()
 	RootComponent = ProceduralMesh;
 }
 
-void ARCBlock::Init(class URCDataAssetBlock* DataAsset, const EBlockType BlockTypeToSpawn, const FVector& GridCoords)
+void ARCBlock::Init(class URCDataAssetBlock* DataAsset, const EBlockType BlockTypeToSpawn, const FVector& GridCoords, const FBlockFaceVisibility InBlockFaceVisibility)
 {
 	DataAssetBlock = DataAsset;
 	GridCoordinates = GridCoords;
-
+	BlockFaceVisibility = InBlockFaceVisibility;
+	
 	if (GridCoordinates.Z != 0)
 		bIsMinable = true;
 
