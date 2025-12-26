@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blocks/RCBlockTypes.h"
 #include "GameFramework/Actor.h"
 #include "RCWorldManager.generated.h"
 
@@ -16,6 +15,17 @@ class RATCRAFT_API ARCWorldManager : public AActor
 	GENERATED_BODY()
 
 public:
+	ARCWorldManager();
+	
+	virtual void BeginPlay() override;
+
+	void AddChunck(int X, int Y);
+private:
 	UPROPERTY()
-	TArray<class ARCWorldChunck*> Chunks;
+	const class URCWorldSettings* WorldSettings;
+	
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class ARCWorldChunck> ChunksClass;
+	UPROPERTY()
+	TMap<FVector2D, class ARCWorldChunck*> AllChunks;
 };

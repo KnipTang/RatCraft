@@ -6,7 +6,6 @@
 #include "Engine/DataAsset.h"
 #include "RCDataAssetBlock.generated.h"
 
-enum class EBlockType : uint8;
 /**
  * 
  */

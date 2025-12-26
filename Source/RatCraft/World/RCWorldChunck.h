@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blocks/RCBlockTypes.h"
 #include "GameFramework/Actor.h"
 #include "ProceduralMeshComponent.h"
+#include "Blocks/RCBlock.h"
 #include "RatCraft/Interactables/RCInteractable.h"
 #include "RCWorldChunck.generated.h"
 
@@ -32,13 +32,11 @@ public:
 
 	virtual void OnInteract() override;
 	virtual void EndInteract() override;
-
-	FVector GetGridCoordsFromWorldPosition(const FVector& WorldPosition) const;
 	
 	void SetCurrentlyLookAtBlock(const FVector& Coords);
 	bool IsMining() const { return bIsMining; }
 	
-	bool SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords, const struct FBlockFaceVisibility BlockFaceVisibility);
+	bool SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords);
 	bool CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const;
 
 protected:
@@ -48,7 +46,6 @@ private:
 	void InitChunckBlockData();
 	
 	void RenderChunck();
-	void RenderBlock(const FVector& Coords);
 	void GenerateBlockFaces(const FVector& Coords);
 
 	void UpdateChunckMesh();
@@ -61,6 +58,8 @@ private:
 	void StopMining();
 	void OnBlockMined();
 	void UpdateMiningProgress();
+	UPROPERTY()
+	class URCDataAssetBlock* CurrentMiningBlockData;
 
 	void LookAtBlockChanged();
 	
@@ -72,6 +71,8 @@ private:
 	struct FBlockFaceVisibility GetBlockFaceVisibilityFromCoords(const FVector& Coords) const;
 	bool IsBlockAtCoords(const FVector& Coords) const;
 	FColor GetBlockColorFromBlockType(const EBlockType BlockTypeToSpawn);
+
+	FVector GetLocalGridCoords(const FVector& GridCoords) const;
 private:
 	UPROPERTY()
 	const class URCWorldSettings* WorldSettings;
@@ -86,9 +87,12 @@ private:
 	FChunckMesh ChunckMeshes;
 
 	FVector LookAtBlockCoords;
-	
+
+	TArray<TArray<int32>> Faces;
 	TArray<float> PerlinNoise;
 
+	FVector ChunckGridCoords;
+	
 	//Mining
 	FTimerHandle MiningTimerHandle;
 

@@ -3,9 +3,11 @@
 
 #include "RCWorldSettings.h"
 
-URCWorldSettings::URCWorldSettings() :
-	HalfBlockSize{BlockSize/2.f}
+URCWorldSettings::URCWorldSettings()
 {
+	HalfBlockSize = {BlockSize / 2.f};
+	WorldChunckSize = {ChunckSize * BlockSize};
+	
 	FaceNormals = {
 		FVector(0, -1, 0),  // South
 		FVector(0, 1, 0),   // North

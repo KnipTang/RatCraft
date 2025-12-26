@@ -3,11 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "RCBlockTypes.h"
-#include "UObject/Interface.h"
-#include "GameFramework/Actor.h"
-#include "RatCraft/Interactables/RCInteractable.h"
 #include "RCBlock.generated.h"
+
+UENUM(BlueprintType)
+enum class EBlockType : uint8
+{
+	Air								UMETA(DisplayName = "Air"),
+	Grass							UMETA(DisplayName = "Grass"),
+	Stone							UMETA(DisplayName = "Stone"),
+	Snow							UMETA(DisplayName = "Snow"),
+};
 
 USTRUCT()
 struct FBlockFaceVisibility
@@ -35,70 +40,4 @@ public:
 	bool West = false;
 
 	TArray<bool> Faces;
-};
-
-struct FBlockMesh
-{
-	TArray<FVector> Vertices;
-	TArray<int32> Triangles;
-	TArray<FVector> Normals;
-	TArray<FVector2D> UVs;
-	TArray<struct FProcMeshTangent> Tangents;
-	TArray<FColor> VertexColors;
-};
-
-UCLASS()
-class RATCRAFT_API ARCBlock : public AActor, public IRCInteractable
-{
-	GENERATED_BODY()
-	
-public:	
-	/**
-	 * 
-	 */
-	ARCBlock();
-
-	void Init(class URCDataAssetBlock* DataAsset, const EBlockType BlockTypeToSpawn, const FVector& GridCoords, const struct FBlockFaceVisibility InBlockFaceVisibility);
-
-	void UpdateMiningProgress();
-	virtual void OnInteract() override;
-	virtual void EndInteract() override;
-
-	bool IsMining() const { return bIsMining; }
-
-	FVector GetGridCoordinates() const { return GridCoordinates; };
-	
-private:
-	void StartMining();
-	void StopMining();
-	void OnBlockMined();
-
-	void CreateMesh(const EBlockType BlockTypeToSpawn);
-	void ConfigureBlock(const EBlockType BlockTypeToSpawn);
-
-	FColor GetBlockColorFromBlockType(const EBlockType BlockTypeToSpawn);
-
-	UPROPERTY(VisibleAnywhere)
-	class UProceduralMeshComponent* ProceduralMesh;
-	
-	UPROPERTY()
-	class URCDataAssetBlock* DataAssetBlock;
-	
-	FVector GridCoordinates;
-	float BlockLength = 100;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Config")
-	EBlockType BlockType = EBlockType::Air;
-	
-	struct FBlockFaceVisibility BlockFaceVisibility;
-	//Mining
-	FTimerHandle MiningTimerHandle;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Setting")
-	float MiningUpdateInterval;
-	
-	float CurrentMinedTime;
-	bool bIsMining;
-
-	bool bIsMinable = false;
 };

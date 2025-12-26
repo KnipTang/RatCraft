@@ -10,11 +10,11 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "RatCraft/Abilities/RCAbilitySystemStatics.h"
 #include "RatCraft/Framework/RCGameModeBase.h"
-#include "RatCraft/Interactables/RCInteractable.h"
 #include "RatCraft/World/RCWorldChunck.h"
-#include "RatCraft/World/RCWorldManager.h"
+#include "RatCraft/World/RCWorldSettings.h"
 #include "RatCraft/World/Blocks/RCBlock.h"
-#include "RatCraft/World/Grid/RCGrid.h"
+
+#pragma optimize("", off)
 
 ARCPlayerCharacter::ARCPlayerCharacter()
 {
@@ -52,7 +52,7 @@ void ARCPlayerCharacter::BeginPlay()
 	{
 		if (ARCGameModeBase* RCGameModeBase = Cast<ARCGameModeBase>(GameMode))
 		{
-			//GridRef = RCGameModeBase->GetGrid();
+
 		}
 	}
 }
@@ -67,7 +67,7 @@ void ARCPlayerCharacter::Tick(float DeltaSeconds)
 	}
 
 	if (MovementComp->Velocity != FVector::ZeroVector)
-		PlayerGridCoords = GetActorLocation() / 100.f;
+		PlayerGridCoords = GetActorLocation() / URCWorldSettings::GetSettings()->BlockSize;
 }
 
 void ARCPlayerCharacter::PawnClientRestart()
@@ -121,11 +121,10 @@ void ARCPlayerCharacter::HandleLookInput(const struct FInputActionValue& InputAc
 
 void ARCPlayerCharacter::HandleMineInput(const struct FInputActionValue& InputActionValue)
 {
-	const bool bPressed = InputActionValue.Get<bool>();
-	
 	if (!CurrentlyLookAtChunck)
 		return;
-	
+
+	const bool bPressed = InputActionValue.Get<bool>();
 	if (bPressed)
 	{
 		if (!CurrentlyLookAtChunck->IsMining())
@@ -150,8 +149,7 @@ void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputA
 		
 		if (CurrentlyLookAtChunck->CanSpawnBlockAtGridCoords(GridCoordsNewBlock, PlayerGridCoords, GetCapsuleComponent()->GetScaledCapsuleRadius()))
 		{
-			const FBlockFaceVisibility BlockFaceVisibility{true, true, true, true, true, true};
-			bool bSucceeded = CurrentlyLookAtChunck->SpawnBlock(EBlockType::Grass, GridCoordsNewBlock, BlockFaceVisibility);
+			bool bSucceeded = CurrentlyLookAtChunck->SpawnBlock(EBlockType::Grass, GridCoordsNewBlock);
 			if (!bSucceeded)
 				return;
 	
@@ -173,7 +171,7 @@ void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputA
 
 void ARCPlayerCharacter::LookAtChunckChanged(class ARCWorldChunck* NewChunck)
 {
-	if (CurrentlyLookAtChunck /*&& CurrentlyLookAtChunck->IsMining()*/)
+	if (CurrentlyLookAtChunck)
 		CurrentlyLookAtChunck->EndInteract();
 	
 	CurrentlyLookAtChunck = NewChunck;
@@ -186,21 +184,20 @@ class ARCWorldChunck* ARCPlayerCharacter::FindInteractableChunck()
 		ViewCam->GetComponentLocation(),
 		ViewCam->GetComponentRotation(),
 		ECC_WorldStatic,
-		400
+		InteractDistance
 		);
 	
 	if (ARCWorldChunck* InteractedChunck = Cast<ARCWorldChunck>(HitResult.GetActor()))
 	{
 		LookAtBlockNormal = HitResult.ImpactNormal;
-
-		const FVector TerrainLocation = InteractedChunck->GetActorLocation();
 		
-		LookAtBlockCoords = (TerrainLocation + HitResult.Location) / 100.f - FVector(
-		FMath::Clamp(LookAtBlockNormal.X, 0, 1),
-		FMath::Clamp(LookAtBlockNormal.Y, 0, 1),
-		FMath::Clamp(LookAtBlockNormal.Z, 0, 1));
+		LookAtBlockCoords = HitResult.Location / URCWorldSettings::GetSettings()->BlockSize -
+			FVector(
+			FMath::Clamp(LookAtBlockNormal.X, 0, 1),
+			FMath::Clamp(LookAtBlockNormal.Y, 0, 1),
+			FMath::Clamp(LookAtBlockNormal.Z, 0, 1));
 		
-		float SnapEpsilon = 0.0001f;
+		constexpr float SnapEpsilon = 0.0001f;
 		LookAtBlockCoords = FVector(
 			FMath::Floor(LookAtBlockCoords.X + SnapEpsilon),
 			FMath::Floor(LookAtBlockCoords.Y + SnapEpsilon),

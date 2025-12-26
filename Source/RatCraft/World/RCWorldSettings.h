@@ -20,6 +20,7 @@ public:
 	
 	UPROPERTY(Config, EditDefaultsOnly)
 	int ChunckSize = 16;
+	float WorldChunckSize;
 	UPROPERTY(Config, EditDefaultsOnly)
 	int ChunckHeight = 50;
 	UPROPERTY(Config, EditDefaultsOnly)

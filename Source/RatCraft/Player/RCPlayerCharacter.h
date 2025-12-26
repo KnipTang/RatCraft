@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "RatCraft/Character/RCCharacter.h"
-#include "RatCraft/World/Blocks/RCBlock.h"
 #include "RCPlayerCharacter.generated.h"
 
 /**
@@ -39,7 +38,6 @@ private:
 	void HandleMineInput(const struct FInputActionValue& InputActionValue);
 	void HandlePlaceInput(const struct FInputActionValue& InputActionValue);
 	
-
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputMappingContext* GameplayInputMappingContext;
 	//Actions
@@ -54,18 +52,23 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputAction* PlaceInputAction;
 
+	/***************************************************/
+	/*					Player Setting					/
+	/***************************************************/
 private:
-	void LookAtChunckChanged(class ARCWorldChunck* NewChunck);
-	class ARCWorldChunck* FindInteractableChunck();
-
+	UPROPERTY(EditDefaultsOnly, Category = "Player Settings")
+	float InteractDistance = 500.f;
+	
+private:
 	UPROPERTY()
 	class ARCWorldChunck* CurrentlyLookAtChunck;
 	
 	FVector LookAtBlockNormal;
 	FVector LookAtBlockCoords;
-
-	//UPROPERTY()
-	//TWeakObjectPtr<class ARCGrid> GridRef;
+	
+	void LookAtChunckChanged(class ARCWorldChunck* NewChunck);
+	class ARCWorldChunck* FindInteractableChunck();
+	
 	FVector PlayerGridCoords;
 
 	//Place block

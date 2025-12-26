@@ -2,8 +2,6 @@
 
 
 #include "RCWorldChunck.h"
-
-#include "KismetProceduralMeshLibrary.h"
 #include "ProceduralMeshComponent.h"
 #include "RCWorldSettings.h"
 #include "Blocks/RCBlock.h"
@@ -23,6 +21,26 @@ ARCWorldChunck::ARCWorldChunck()
 	RootComponent = ProceduralMesh;
 
 	WorldSettings = URCWorldSettings::GetSettings();
+
+	Faces = {
+		{3, 2, 1, 0}, // South
+		{6, 7, 4, 5}, // North
+		{7, 3, 0, 4}, // West
+		{2, 6, 5, 1}, // East
+		{7, 6, 2, 3}, // Top
+		{0, 1, 5, 4}  // Bottom
+	};
+}
+
+void ARCWorldChunck::BeginPlay()
+{
+	Super::BeginPlay();
+
+	ChunckGridCoords = GetActorLocation() / WorldSettings->BlockSize;
+
+	PerlinNoise = GeneratePerlinNoise();
+	InitChunckBlockData();
+	RenderChunck();
 }
 
 void ARCWorldChunck::OnInteract()
@@ -35,27 +53,13 @@ void ARCWorldChunck::EndInteract()
 	StopMining();
 }
 
-FVector ARCWorldChunck::GetGridCoordsFromWorldPosition(const FVector& WorldPosition) const
-{
-	return WorldPosition / WorldSettings->BlockSize;
-}
-
-void ARCWorldChunck::BeginPlay()
-{
-	Super::BeginPlay();
-
-	PerlinNoise = GeneratePerlinNoise();
-	InitChunckBlockData();
-	RenderChunck();
-}
-
 void ARCWorldChunck::InitChunckBlockData()
 {
 	for (int X = 0; X < WorldSettings->ChunckSize; X++)
 	{
 		for (int Z = 0; Z < WorldSettings->ChunckSize; Z++)
 		{
-			float NoiseHeight = GetNoiseHeightAt(X, Z);
+			const float NoiseHeight = GetNoiseHeightAt(X, Z);
 			int TerrainHeight = FMath::RoundToInt(NoiseHeight * WorldSettings->ChunckHeight);
 			TerrainHeight = FMath::Clamp(TerrainHeight, 0, WorldSettings->ChunckHeight - 1);
 			
@@ -63,7 +67,6 @@ void ARCWorldChunck::InitChunckBlockData()
 			{
 				const FVector Coords = FVector(X, Z, Y);
 				ChunckBlocksData.Add(Coords, GetBlockTypeFromHeight(TerrainHeight, Y));
-
 			}
 		}
 	}
@@ -72,26 +75,22 @@ void ARCWorldChunck::InitChunckBlockData()
 
 void ARCWorldChunck::RenderChunck()
 {
+	ChunckMeshes = {};
+	
 	for (TPair<FVector /*Coords*/, EBlockType> BlockData : ChunckBlocksData)
 	{
 		if (BlockData.Value == EBlockType::Air)
 			continue;
 
-		RenderBlock(BlockData.Key);
+		GenerateBlockFaces(BlockData.Key);
 	}
 
 	ProceduralMesh->ClearAllMeshSections();
-	//UKismetProceduralMeshLibrary::CalculateTangentsForMesh(ChunckMeshes.Vertices, ChunckMeshes.Triangles, ChunckMeshes.UVs, ChunckMeshes.Normals, ChunckMeshes.Tangents);
     ProceduralMesh->CreateMeshSection(0, ChunckMeshes.Vertices, ChunckMeshes.Triangles, ChunckMeshes.Normals, ChunckMeshes.UVs, ChunckMeshes.VertexColors, ChunckMeshes.Tangents, true);
     if (UMaterialInterface* Material = BlockDataAsset.FindChecked(EBlockType::Grass)->GetMaterial())
     {
     	ProceduralMesh->SetMaterial(0, Material);
     }
-}
-
-void ARCWorldChunck::RenderBlock(const FVector& Coords)
-{
-	GenerateBlockFaces(Coords);
 }
 
 void ARCWorldChunck::GenerateBlockFaces(const FVector& Coords)
@@ -103,15 +102,6 @@ void ARCWorldChunck::GenerateBlockFaces(const FVector& Coords)
 	TArray<FColor>& VertexColors = ChunckMeshes.VertexColors;
 
 	const FBlockFaceVisibility BlockFaceVisibility = GetBlockFaceVisibilityFromCoords(Coords);
-	
-    TArray<TArray<int32>> Faces = {
-        {3, 2, 1, 0}, // South
-		{6, 7, 4, 5}, // North
-        {7, 3, 0, 4}, // West
-        {2, 6, 5, 1}, // East
-        {7, 6, 2, 3}, // Top
-        {0, 1, 5, 4}  // Bottom
-    };
 
 	TArray<TArray<int32>> FinalFaces {};
 
@@ -158,49 +148,51 @@ void ARCWorldChunck::GenerateBlockFaces(const FVector& Coords)
 
 void ARCWorldChunck::UpdateChunckMesh()
 {
-	ChunckMeshes = {};
-	//ProceduralMesh->UpdateMeshSection();
 	RenderChunck();
 }
 
 void ARCWorldChunck::SetCurrentlyLookAtBlock(const FVector& Coords)
 {
-	if (Coords != LookAtBlockCoords)
+	const FVector NewCoords = GetLocalGridCoords(Coords);
+	
+	if (NewCoords != LookAtBlockCoords)
 	{
-		LookAtBlockCoords = Coords;
+		LookAtBlockCoords = NewCoords;
 		LookAtBlockChanged();
 	}
 }
 
-bool ARCWorldChunck::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords, const struct FBlockFaceVisibility BlockFaceVisibility)
+bool ARCWorldChunck::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords)
 {
-	if (!ChunckBlocksData.Contains(GridCoords))
+	const FVector LocalGridCoords = GetLocalGridCoords(GridCoords);
+
+	if (!ChunckBlocksData.Contains(LocalGridCoords))
 		return false;
 
-	ChunckBlocksData.FindChecked(GridCoords) = BlockTypeToSpawn;
+	ChunckBlocksData.FindChecked(LocalGridCoords) = BlockTypeToSpawn;
+	
 	UpdateChunckMesh();
-
+	
 	return true;
 }
 
 bool ARCWorldChunck::CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const
 {
-	return (!IsPlayerObstructing(NewBlockGridCoords, PlayerGridCoords, PlayerColliderSize) && NewBlockGridCoords.Z <= WorldSettings->ChunckHeight);
+	return (
+		!IsPlayerObstructing(NewBlockGridCoords, PlayerGridCoords, PlayerColliderSize)
+		&& NewBlockGridCoords.Z - ChunckGridCoords.Z <= WorldSettings->ChunckHeight
+		);
 }
 
 bool ARCWorldChunck::IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const
 {
+	const float HalfBlockSizeCoordsSize = WorldSettings->HalfBlockSize / WorldSettings->BlockSize;
 	const float Distance = 
-		FMath::Abs((NewBlockGridCoords.X + 0.5f) - PlayerGridCoords.X) +
-		FMath::Abs((NewBlockGridCoords.Y + 0.5f) - PlayerGridCoords.Y) +
-		FMath::Abs((NewBlockGridCoords.Z + 0.5f) - PlayerGridCoords.Z);
-
-	float PlayerRadius = PlayerColliderSize / WorldSettings->BlockSize;
-
-	UE_LOG(LogTemp, Warning, TEXT("Distance is %f"), Distance);
-	UE_LOG(LogTemp, Warning, TEXT("PlayerGridCoords is %s"), *PlayerGridCoords.ToString());
+		FMath::Abs((NewBlockGridCoords.X + HalfBlockSizeCoordsSize) - PlayerGridCoords.X) +
+		FMath::Abs((NewBlockGridCoords.Y + HalfBlockSizeCoordsSize) - PlayerGridCoords.Y) +
+		FMath::Abs((NewBlockGridCoords.Z + HalfBlockSizeCoordsSize) - PlayerGridCoords.Z);
 	
-	if (Distance >= 1 + PlayerRadius)
+	if (Distance >= 1 + PlayerColliderSize / WorldSettings->BlockSize)
 	{
 		return false;
 	}
@@ -212,7 +204,13 @@ void ARCWorldChunck::StartMining()
 {
 	bIsMining = true;
 
-	if (UWorld* World = GetWorld())
+	if (!ChunckBlocksData.Contains(LookAtBlockCoords))
+		return;
+	
+	const EBlockType Type = ChunckBlocksData.FindChecked(LookAtBlockCoords);
+	CurrentMiningBlockData = BlockDataAsset.FindChecked(Type);
+
+	if (const UWorld* World = GetWorld())
 		World->GetTimerManager().SetTimer(
 		MiningTimerHandle,
 		this,
@@ -227,10 +225,7 @@ void ARCWorldChunck::StopMining()
 	bIsMining = false;
 	CurrentMinedTime = 0;
 
-	UE_LOG(LogTemp, Warning, TEXT("STOP"));
-
-
-	if (UWorld* World = GetWorld())
+	if (const UWorld* World = GetWorld())
 		World->GetTimerManager().ClearTimer(MiningTimerHandle);
 }
 
@@ -244,14 +239,10 @@ void ARCWorldChunck::OnBlockMined()
 void ARCWorldChunck::UpdateMiningProgress()
 {
 	CurrentMinedTime += MiningUpdateInterval;
-	
-	UE_LOG(LogTemp, Warning, TEXT("%f"), 
-		CurrentMinedTime);
-	
-	const EBlockType Type = ChunckBlocksData.FindChecked(LookAtBlockCoords);
-	const URCDataAssetBlock* BlockData = BlockDataAsset.FindChecked(Type);
 
-	if (CurrentMinedTime >= BlockData->GetMineTime())
+	UE_LOG(LogTemp, Warning, TEXT("%f"), CurrentMinedTime);
+
+	if (CurrentMinedTime >= CurrentMiningBlockData->GetMineTime())
 	{
 		OnBlockMined();
 	}
@@ -268,13 +259,18 @@ void ARCWorldChunck::LookAtBlockChanged()
 /***************************************************/
 /*					  GETTERS						/
 /***************************************************/
+TArray<float> ARCWorldChunck::GeneratePerlinNoise() const
+{
+	return URCPerlinNoise::GenerateHeightMap(WorldSettings->ChunckSize, WorldSettings->ChunckSize, WorldSettings->PerlinNoiseScale, FVector2D(ChunckGridCoords.X, ChunckGridCoords.Y));
+}
+
 float ARCWorldChunck::GetNoiseHeightAt(int X, int Z)
 {
 	URCWorldSettings::GetSettings()->BlockSize;
 	if (PerlinNoise.Num() == 0)
 		return 0.0f;
 	
-	int NoiseIndex = X + Z * WorldSettings->ChunckSize;
+	const int NoiseIndex = X + Z * WorldSettings->ChunckSize;
     
 	if (NoiseIndex >= 0 && NoiseIndex < PerlinNoise.Num())
 	{
@@ -282,11 +278,6 @@ float ARCWorldChunck::GetNoiseHeightAt(int X, int Z)
 	}
     
 	return 0.0f;
-}
-
-TArray<float> ARCWorldChunck::GeneratePerlinNoise() const
-{
-	return URCPerlinNoise::GenerateHeightMap(WorldSettings->ChunckSize, WorldSettings->ChunckSize, WorldSettings->PerlinNoiseScale, FVector2D());
 }
 
 EBlockType ARCWorldChunck::GetBlockTypeFromHeight(const int TerrainHeight, const int BlockHeight) const
@@ -342,6 +333,11 @@ FColor ARCWorldChunck::GetBlockColorFromBlockType(const EBlockType BlockTypeToSp
 	}
 	
 	return FColor::Purple;
+}
+
+FVector ARCWorldChunck::GetLocalGridCoords(const FVector& GridCoords) const
+{
+	return GridCoords - ChunckGridCoords;
 }
 
 
