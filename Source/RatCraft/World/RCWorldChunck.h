@@ -6,6 +6,7 @@
 #include "Blocks/RCBlockTypes.h"
 #include "GameFramework/Actor.h"
 #include "ProceduralMeshComponent.h"
+#include "RatCraft/Interactables/RCInteractable.h"
 #include "RCWorldChunck.generated.h"
 
 USTRUCT()
@@ -22,12 +23,23 @@ GENERATED_BODY()
 };
 
 UCLASS()
-class RATCRAFT_API ARCWorldChunck : public AActor
+class RATCRAFT_API ARCWorldChunck : public AActor, public IRCInteractable
 {
 	GENERATED_BODY()
 	
 public:	
 	ARCWorldChunck();
+
+	virtual void OnInteract() override;
+	virtual void EndInteract() override;
+
+	FVector GetGridCoordsFromWorldPosition(const FVector& WorldPosition) const;
+	
+	void SetCurrentlyLookAtBlock(const FVector& Coords);
+	bool IsMining() const { return bIsMining; }
+	
+	bool SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords, const struct FBlockFaceVisibility BlockFaceVisibility);
+	bool CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -36,8 +48,21 @@ private:
 	void InitChunckBlockData();
 	
 	void RenderChunck();
-	void RenderBlock(TPair<FVector /*Coords*/, EBlockType> BlockData, const struct FBlockFaceVisibility BlockfaceVisibility);
-	void GenerateFace(TPair<FVector, EBlockType> BlockData, const struct FBlockFaceVisibility BlockfaceVisibility);
+	void RenderBlock(const FVector& Coords);
+	void GenerateBlockFaces(const FVector& Coords);
+
+	void UpdateChunckMesh();
+
+	//PLACEMENT
+	bool IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const;
+
+	//MINING
+	void StartMining();
+	void StopMining();
+	void OnBlockMined();
+	void UpdateMiningProgress();
+
+	void LookAtBlockChanged();
 	
 	//GETTERS
 	float GetNoiseHeightAt(int X, int Z);
@@ -47,7 +72,6 @@ private:
 	struct FBlockFaceVisibility GetBlockFaceVisibilityFromCoords(const FVector& Coords) const;
 	bool IsBlockAtCoords(const FVector& Coords) const;
 	FColor GetBlockColorFromBlockType(const EBlockType BlockTypeToSpawn);
-
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
 	int ChunckSize = 16;
@@ -62,8 +86,8 @@ private:
 	int RockLevel = 5.f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
-	int BlockSize = 100.f;
-	int HalfBlockSize;
+	float BlockSize = 100.f;
+	float HalfBlockSize;
 	
 	TMap<FVector /*Coords*/, EBlockType> ChunckBlocksData;
 	FChunckMesh ChunckMeshes;
@@ -76,6 +100,17 @@ private:
 	
 	TArray<FVector> FaceNormals;
 	TArray<FVector> CubeVertices;
+
+	FVector LookAtBlockCoords;
 	
 	TArray<float> PerlinNoise;
+
+	//Mining
+	FTimerHandle MiningTimerHandle;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setting")
+	float MiningUpdateInterval = 0.1f;
+	
+	float CurrentMinedTime;
+	bool bIsMining;
 };

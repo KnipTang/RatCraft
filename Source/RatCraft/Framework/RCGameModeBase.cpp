@@ -17,15 +17,15 @@ void ARCGameModeBase::BeginPlay()
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	
-	WorldGenerator = GetWorld()->SpawnActor<ARCWorldGenerator>(
-		WorldGeneratorClass, 
-		FVector(0, 0, 0), 
-		FRotator::ZeroRotator, 
-		SpawnParams
-	);
+	//WorldGenerator = GetWorld()->SpawnActor<ARCWorldGenerator>(
+	//	WorldGeneratorClass, 
+	//	FVector(0, 0, 0), 
+	//	FRotator::ZeroRotator, 
+	//	SpawnParams
+	//);
 }
 
-class ARCGrid* ARCGameModeBase::GetGrid() const
-{
-	return WorldGenerator->GetGrid();
-}
+//class ARCGrid* ARCGameModeBase::GetGrid() const
+//{
+//	return WorldGenerator->GetGrid();
+//}

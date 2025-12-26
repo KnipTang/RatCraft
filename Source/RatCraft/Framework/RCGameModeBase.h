@@ -19,12 +19,12 @@ public:
 
 	virtual void BeginPlay() override;
 
-	class ARCWorldGenerator* GetWorldGenerator() const { return WorldGenerator; }
-	class ARCGrid* GetGrid() const;
+	//class ARCWorldGenerator* GetWorldGenerator() const { return WorldGenerator; }
+	//class ARCGrid* GetGrid() const;
 private:
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<class ARCWorldGenerator> WorldGeneratorClass;
-
-	UPROPERTY()
-	ARCWorldGenerator* WorldGenerator;
+	//UPROPERTY(EditDefaultsOnly)
+	//TSubclassOf<class ARCWorldGenerator> WorldGeneratorClass;
+//
+	//UPROPERTY()
+	//ARCWorldGenerator* WorldGenerator;
 };

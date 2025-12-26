@@ -16,8 +16,10 @@ struct FBlockFaceVisibility
 	
 public:
 	FBlockFaceVisibility() :
-		Top(false), Bottom(false), North(false), East(false), South(false), West(false) 
-	{}
+		Top(false), Bottom(false), North(false), East(false), South(false), West(false)
+	{
+		Faces = {South, North, West, East, Top, Bottom};
+	}
 	FBlockFaceVisibility(bool InTop, bool InBottom, bool InNorth, bool InEast, bool InSouth, bool InWest) :
 		Top(InTop), Bottom(InBottom), North(InNorth), East(InEast), South(InSouth), West(InWest)
 	{

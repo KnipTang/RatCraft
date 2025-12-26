@@ -9,12 +9,14 @@
 #include "Blocks/RCDataAssetBlock.h"
 #include "PerlinNoise/RCPerlinNoise.h"
 
+#pragma optimize("", off)
+
 // Sets default values
 ARCWorldChunck::ARCWorldChunck()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	
 	ProceduralMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("ProceduralMesh"));
 	ProceduralMesh->SetCollisionResponseToAllChannels(ECR_Block);
 	RootComponent = ProceduralMesh;
@@ -42,6 +44,21 @@ ARCWorldChunck::ARCWorldChunck()
 	};
 }
 
+void ARCWorldChunck::OnInteract()
+{
+	StartMining();
+}
+
+void ARCWorldChunck::EndInteract()
+{
+	StopMining();
+}
+
+FVector ARCWorldChunck::GetGridCoordsFromWorldPosition(const FVector& WorldPosition) const
+{
+	return WorldPosition / BlockSize;
+}
+
 void ARCWorldChunck::BeginPlay()
 {
 	Super::BeginPlay();
@@ -59,7 +76,7 @@ void ARCWorldChunck::InitChunckBlockData()
 		{
 			float NoiseHeight = GetNoiseHeightAt(X, Z);
 			int TerrainHeight = FMath::RoundToInt(NoiseHeight * ChunckHeight);
-			TerrainHeight = FMath::Clamp(TerrainHeight, 1, ChunckHeight - 1);
+			TerrainHeight = FMath::Clamp(TerrainHeight, 0, ChunckHeight - 1);
 			
 			for (int Y = 0; Y < ChunckHeight; Y++)
 			{
@@ -78,32 +95,33 @@ void ARCWorldChunck::RenderChunck()
 	{
 		if (BlockData.Value == EBlockType::Air)
 			continue;
-		
-		const FBlockFaceVisibility BlockFaceVisibility = GetBlockFaceVisibilityFromCoords(BlockData.Key);
-		RenderBlock(BlockData, BlockFaceVisibility);
+
+		RenderBlock(BlockData.Key);
 	}
-	
-	UKismetProceduralMeshLibrary::CalculateTangentsForMesh(ChunckMeshes.Vertices, ChunckMeshes.Triangles, ChunckMeshes.UVs, ChunckMeshes.Normals, ChunckMeshes.Tangents);
+
+	ProceduralMesh->ClearAllMeshSections();
+	//UKismetProceduralMeshLibrary::CalculateTangentsForMesh(ChunckMeshes.Vertices, ChunckMeshes.Triangles, ChunckMeshes.UVs, ChunckMeshes.Normals, ChunckMeshes.Tangents);
     ProceduralMesh->CreateMeshSection(0, ChunckMeshes.Vertices, ChunckMeshes.Triangles, ChunckMeshes.Normals, ChunckMeshes.UVs, ChunckMeshes.VertexColors, ChunckMeshes.Tangents, true);
-    	
     if (UMaterialInterface* Material = BlockDataAsset.FindChecked(EBlockType::Grass)->GetMaterial())
     {
     	ProceduralMesh->SetMaterial(0, Material);
     }
 }
 
-void ARCWorldChunck::RenderBlock(TPair<FVector, EBlockType> BlockData, const FBlockFaceVisibility BlockfaceVisibility)
+void ARCWorldChunck::RenderBlock(const FVector& Coords)
 {
-	GenerateFace(BlockData, BlockfaceVisibility);
+	GenerateBlockFaces(Coords);
 }
 
-void ARCWorldChunck::GenerateFace(TPair<FVector, EBlockType> BlockData, const FBlockFaceVisibility BlockfaceVisibility)
+void ARCWorldChunck::GenerateBlockFaces(const FVector& Coords)
 {
 	TArray<FVector>& Vertices = ChunckMeshes.Vertices;
 	TArray<int32>& Triangles = ChunckMeshes.Triangles;
 	TArray<FVector>& Normals = ChunckMeshes.Normals;
 	TArray<FVector2D>& UVs = ChunckMeshes.UVs;
 	TArray<FColor>& VertexColors = ChunckMeshes.VertexColors;
+
+	const FBlockFaceVisibility BlockFaceVisibility = GetBlockFaceVisibilityFromCoords(Coords);
 	
     TArray<TArray<int32>> Faces = {
         {3, 2, 1, 0}, // South
@@ -118,7 +136,7 @@ void ARCWorldChunck::GenerateFace(TPair<FVector, EBlockType> BlockData, const FB
 
 	for (int32 FaceIndex = 0; FaceIndex < Faces.Num(); FaceIndex++)
 	{
-		bool FaceVisible = BlockfaceVisibility.Faces[FaceIndex];
+		bool FaceVisible = BlockFaceVisibility.Faces[FaceIndex];
 		if (!FaceVisible)
 			continue;
 
@@ -132,14 +150,14 @@ void ARCWorldChunck::GenerateFace(TPair<FVector, EBlockType> BlockData, const FB
 
         for (int32 i = 0; i < 4; i++)
         {
-            Vertices.Add(CubeVertices[Face[i]] + (BlockData.Key * BlockSize));
+            Vertices.Add(CubeVertices[Face[i]] + (Coords * BlockSize) + HalfBlockSize);
         	
             if (i == 0) UVs.Add(FVector2D(0, 1));
             else if (i == 1) UVs.Add(FVector2D(1, 1));
             else if (i == 2) UVs.Add(FVector2D(1, 0));
             else UVs.Add(FVector2D(0, 0));
         	
-            VertexColors.Add(GetBlockColorFromBlockType(BlockData.Value));
+            VertexColors.Add(GetBlockColorFromBlockType(ChunckBlocksData[Coords]));
         }
     	
         Triangles.Add(BaseIndex);
@@ -155,6 +173,119 @@ void ARCWorldChunck::GenerateFace(TPair<FVector, EBlockType> BlockData, const FB
             Normals.Add(FaceNormals[FaceIndex]);
         }
     }
+}
+
+void ARCWorldChunck::UpdateChunckMesh()
+{
+	ChunckMeshes = {};
+	//ProceduralMesh->UpdateMeshSection();
+	RenderChunck();
+}
+
+void ARCWorldChunck::SetCurrentlyLookAtBlock(const FVector& Coords)
+{
+	if (Coords != LookAtBlockCoords)
+	{
+		LookAtBlockCoords = Coords;
+		LookAtBlockChanged();
+	}
+}
+
+bool ARCWorldChunck::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords, const struct FBlockFaceVisibility BlockFaceVisibility)
+{
+	if (!ChunckBlocksData.Contains(GridCoords))
+		return false;
+
+	ChunckBlocksData.FindChecked(GridCoords) = BlockTypeToSpawn;
+	UpdateChunckMesh();
+
+	return true;
+}
+
+bool ARCWorldChunck::CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const
+{
+	return (!IsPlayerObstructing(NewBlockGridCoords, PlayerGridCoords, PlayerColliderSize) && NewBlockGridCoords.Z <= ChunckHeight);
+}
+
+bool ARCWorldChunck::IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const
+{
+	const float Distance = 
+		FMath::Abs((NewBlockGridCoords.X + 0.5f) - PlayerGridCoords.X) +
+		FMath::Abs((NewBlockGridCoords.Y + 0.5f) - PlayerGridCoords.Y) +
+		FMath::Abs((NewBlockGridCoords.Z + 0.5f) - PlayerGridCoords.Z);
+
+	float PlayerRadius = PlayerColliderSize / BlockSize;
+
+	UE_LOG(LogTemp, Warning, TEXT("Distance is %f"), Distance);
+	UE_LOG(LogTemp, Warning, TEXT("PlayerGridCoords is %s"), *PlayerGridCoords.ToString());
+	
+	if (Distance >= 1 + PlayerRadius)
+	{
+		return false;
+	}
+    
+	return true;
+}
+
+void ARCWorldChunck::StartMining()
+{
+	bIsMining = true;
+
+	if (UWorld* World = GetWorld())
+		World->GetTimerManager().SetTimer(
+		MiningTimerHandle,
+		this,
+		&ARCWorldChunck::UpdateMiningProgress,
+		MiningUpdateInterval,
+		true
+	);
+}
+
+void ARCWorldChunck::StopMining()
+{
+	bIsMining = false;
+	CurrentMinedTime = 0;
+
+	UE_LOG(LogTemp, Warning, TEXT("STOP"));
+
+
+	if (UWorld* World = GetWorld())
+		World->GetTimerManager().ClearTimer(MiningTimerHandle);
+}
+
+void ARCWorldChunck::OnBlockMined()
+{
+	ChunckBlocksData[LookAtBlockCoords] = EBlockType::Air;
+	StopMining();
+	UpdateChunckMesh();
+}
+
+void ARCWorldChunck::UpdateMiningProgress()
+{
+	CurrentMinedTime += MiningUpdateInterval;
+	
+	UE_LOG(LogTemp, Warning, TEXT("%f"), 
+		CurrentMinedTime);
+	
+	EBlockType* type = ChunckBlocksData.Find(LookAtBlockCoords);
+	URCDataAssetBlock** BlockData = BlockDataAsset.Find(*type);
+
+	if (CurrentMinedTime >= 2)
+	{
+		OnBlockMined();
+	}
+	//if (CurrentMinedTime >= BlockDataAsset.Find(*type)->GetMineTime())
+	//{
+	//	OnBlockMined();
+	//}
+}
+
+void ARCWorldChunck::LookAtBlockChanged()
+{
+	if (bIsMining)
+	{
+		StopMining();
+	}
 }
 
 /***************************************************/
@@ -229,6 +360,9 @@ FColor ARCWorldChunck::GetBlockColorFromBlockType(const EBlockType BlockTypeToSp
 		break;
 	case EBlockType::Snow:
 		return FColor::White;
+		break;
+	case EBlockType::RED:
+		return FColor::Red;
 		break;
 	}
 	

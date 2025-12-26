@@ -55,15 +55,17 @@ private:
 	class UInputAction* PlaceInputAction;
 
 private:
-	void LookAtBlockChanged(class ARCBlock* NewBlock);
-	class ARCBlock* FindInteractableBlock();
-	UPROPERTY()
-	class ARCBlock* CurrentlyLookedAtBlock;
-	
-	FVector LookAtBlockNormal;
+	void LookAtChunckChanged(class ARCWorldChunck* NewChunck);
+	class ARCWorldChunck* FindInteractableChunck();
 
 	UPROPERTY()
-	TWeakObjectPtr<class ARCGrid> GridRef;
+	class ARCWorldChunck* CurrentlyLookAtChunck;
+	
+	FVector LookAtBlockNormal;
+	FVector LookAtBlockCoords;
+
+	//UPROPERTY()
+	//TWeakObjectPtr<class ARCGrid> GridRef;
 	FVector PlayerGridCoords;
 
 	//Place block

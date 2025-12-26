@@ -14,4 +14,10 @@ UCLASS()
 class RATCRAFT_API URCWorldManager : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
+
+public:
+	float BlockSize;
+	
+	UPROPERTY()
+	TArray<class ARCWorldChunck*> Chunks;
 };

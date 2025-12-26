@@ -11,6 +11,7 @@
 #include "RatCraft/Abilities/RCAbilitySystemStatics.h"
 #include "RatCraft/Framework/RCGameModeBase.h"
 #include "RatCraft/Interactables/RCInteractable.h"
+#include "RatCraft/World/RCWorldChunck.h"
 #include "RatCraft/World/RCWorldManager.h"
 #include "RatCraft/World/Blocks/RCBlock.h"
 #include "RatCraft/World/Grid/RCGrid.h"
@@ -51,7 +52,7 @@ void ARCPlayerCharacter::BeginPlay()
 	{
 		if (ARCGameModeBase* RCGameModeBase = Cast<ARCGameModeBase>(GameMode))
 		{
-			GridRef = RCGameModeBase->GetGrid();
+			//GridRef = RCGameModeBase->GetGrid();
 		}
 	}
 }
@@ -60,13 +61,13 @@ void ARCPlayerCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (ARCBlock* LookAtBlock = FindInteractableBlock(); LookAtBlock != CurrentlyLookedAtBlock)
+	if (ARCWorldChunck* LookAtChunck = FindInteractableChunck(); LookAtChunck != CurrentlyLookAtChunck)
 	{
-		LookAtBlockChanged(LookAtBlock);
+		LookAtChunckChanged(LookAtChunck);
 	}
 
 	if (MovementComp->Velocity != FVector::ZeroVector)
-		PlayerGridCoords = GridRef->GetGridCoordsFromWorldPosition(GetActorLocation());
+		PlayerGridCoords = GetActorLocation() / 100.f;
 }
 
 void ARCPlayerCharacter::PawnClientRestart()
@@ -121,41 +122,41 @@ void ARCPlayerCharacter::HandleLookInput(const struct FInputActionValue& InputAc
 void ARCPlayerCharacter::HandleMineInput(const struct FInputActionValue& InputActionValue)
 {
 	const bool bPressed = InputActionValue.Get<bool>();
-
-	if (!CurrentlyLookedAtBlock)
+	
+	if (!CurrentlyLookAtChunck)
 		return;
 	
 	if (bPressed)
 	{
-		if (!CurrentlyLookedAtBlock->IsMining())
-			CurrentlyLookedAtBlock->OnInteract();
+		if (!CurrentlyLookAtChunck->IsMining())
+			CurrentlyLookAtChunck->OnInteract();
 	}
 	else //Released
 	{
-		CurrentlyLookedAtBlock->EndInteract();
+		CurrentlyLookAtChunck->EndInteract();
 	}
 }
 
 void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputActionValue)
 {
 	const bool bPressed = InputActionValue.Get<bool>();
-
-	if (!bCanPlaceBlock || !CurrentlyLookedAtBlock)
+	
+	if (!bCanPlaceBlock || !CurrentlyLookAtChunck)
 		return;
 	
 	if (bPressed)
 	{
-		const FVector GridCoordsNewBlock = CurrentlyLookedAtBlock->GetGridCoordinates() + LookAtBlockNormal;
+		const FVector GridCoordsNewBlock = LookAtBlockCoords + LookAtBlockNormal;
 		
-		if (GridRef->CanSpawnBlockAtGridCoords(GridCoordsNewBlock, PlayerGridCoords, GetCapsuleComponent()->GetScaledCapsuleRadius() / 2.f))
+		if (CurrentlyLookAtChunck->CanSpawnBlockAtGridCoords(GridCoordsNewBlock, PlayerGridCoords, GetCapsuleComponent()->GetScaledCapsuleRadius()))
 		{
 			const FBlockFaceVisibility BlockFaceVisibility{true, true, true, true, true, true};
-			bool bSucceeded = GridRef->SpawnBlock(EBlockType::Grass, GridCoordsNewBlock, BlockFaceVisibility);
+			bool bSucceeded = CurrentlyLookAtChunck->SpawnBlock(EBlockType::Grass, GridCoordsNewBlock, BlockFaceVisibility);
 			if (!bSucceeded)
 				return;
-
+	
 			bCanPlaceBlock = false;
-
+	
 			if (UWorld* World = GetWorld())
 				World->GetTimerManager().SetTimer(
 				BlockPlacedTimerHandle,
@@ -170,15 +171,15 @@ void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputA
 	}
 }
 
-void ARCPlayerCharacter::LookAtBlockChanged(class ARCBlock* NewBlock)
+void ARCPlayerCharacter::LookAtChunckChanged(class ARCWorldChunck* NewChunck)
 {
-	if (CurrentlyLookedAtBlock && CurrentlyLookedAtBlock->IsMining())
-		CurrentlyLookedAtBlock->EndInteract();
+	if (CurrentlyLookAtChunck /*&& CurrentlyLookAtChunck->IsMining()*/)
+		CurrentlyLookAtChunck->EndInteract();
 	
-	CurrentlyLookedAtBlock = NewBlock;
+	CurrentlyLookAtChunck = NewChunck;
 }
 
-class ARCBlock* ARCPlayerCharacter::FindInteractableBlock()
+class ARCWorldChunck* ARCPlayerCharacter::FindInteractableChunck()
 {
 	const FHitResult HitResult = URCAbilitySystemStatics::GetHitscanTarget(
 		GetWorld(),
@@ -187,13 +188,28 @@ class ARCBlock* ARCPlayerCharacter::FindInteractableBlock()
 		ECC_WorldStatic,
 		400
 		);
-
-	AActor* PossibleInteractableActor = HitResult.GetActor();
-	if (ARCBlock* InteractableBlock = Cast<ARCBlock>(PossibleInteractableActor))
+	
+	if (ARCWorldChunck* InteractedChunck = Cast<ARCWorldChunck>(HitResult.GetActor()))
 	{
 		LookAtBlockNormal = HitResult.ImpactNormal;
+
+		const FVector TerrainLocation = InteractedChunck->GetActorLocation();
 		
-		return InteractableBlock;
+		LookAtBlockCoords = (TerrainLocation + HitResult.Location) / 100.f - FVector(
+		FMath::Clamp(LookAtBlockNormal.X, 0, 1),
+		FMath::Clamp(LookAtBlockNormal.Y, 0, 1),
+		FMath::Clamp(LookAtBlockNormal.Z, 0, 1));
+		
+		float SnapEpsilon = 0.0001f;
+		LookAtBlockCoords = FVector(
+			FMath::Floor(LookAtBlockCoords.X + SnapEpsilon),
+			FMath::Floor(LookAtBlockCoords.Y + SnapEpsilon),
+			FMath::Floor(LookAtBlockCoords.Z + SnapEpsilon)
+		);
+		
+		InteractedChunck->SetCurrentlyLookAtBlock(LookAtBlockCoords);
+		
+		return InteractedChunck;
 	}
 	return nullptr;
 }
