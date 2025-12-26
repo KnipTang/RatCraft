@@ -73,33 +73,17 @@ private:
 	bool IsBlockAtCoords(const FVector& Coords) const;
 	FColor GetBlockColorFromBlockType(const EBlockType BlockTypeToSpawn);
 private:
-	UPROPERTY(EditDefaultsOnly, Category = "Config")
-	int ChunckSize = 16;
-	UPROPERTY(EditDefaultsOnly, Category = "Config")
-	int ChunckHeight = 50;
-	UPROPERTY(EditDefaultsOnly, Category = "Config")
-	float GridScale = 0.1f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Config")
-	int SnowLevel = 50.f;
-	UPROPERTY(EditDefaultsOnly, Category = "Config")
-	int RockLevel = 5.f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Config")
-	float BlockSize = 100.f;
-	float HalfBlockSize;
+	UPROPERTY()
+	const class URCWorldSettings* WorldSettings;
 	
-	TMap<FVector /*Coords*/, EBlockType> ChunckBlocksData;
-	FChunckMesh ChunckMeshes;
+	UPROPERTY(VisibleAnywhere)
+	class UProceduralMeshComponent* ProceduralMesh;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Blocks")
 	TMap<EBlockType, class URCDataAssetBlock*> BlockDataAsset;
-
-	UPROPERTY(VisibleAnywhere)
-	class UProceduralMeshComponent* ProceduralMesh;
 	
-	TArray<FVector> FaceNormals;
-	TArray<FVector> CubeVertices;
+	TMap<FVector /*Coords*/, EBlockType> ChunckBlocksData;
+	FChunckMesh ChunckMeshes;
 
 	FVector LookAtBlockCoords;
 	

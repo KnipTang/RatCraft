@@ -12,6 +12,4 @@ enum class EBlockType : uint8
 	Grass							UMETA(DisplayName = "Grass"),
 	Stone							UMETA(DisplayName = "Stone"),
 	Snow							UMETA(DisplayName = "Snow"),
-
-	RED							UMETA(DisplayName = "RED"),
 };

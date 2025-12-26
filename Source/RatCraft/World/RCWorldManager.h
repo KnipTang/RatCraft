@@ -4,20 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Blocks/RCBlockTypes.h"
-#include "Kismet/BlueprintFunctionLibrary.h"
+#include "GameFramework/Actor.h"
 #include "RCWorldManager.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class RATCRAFT_API URCWorldManager : public UBlueprintFunctionLibrary
+class RATCRAFT_API ARCWorldManager : public AActor
 {
 	GENERATED_BODY()
 
 public:
-	float BlockSize;
-	
 	UPROPERTY()
 	TArray<class ARCWorldChunck*> Chunks;
 };
