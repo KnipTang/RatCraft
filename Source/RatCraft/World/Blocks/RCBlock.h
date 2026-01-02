@@ -8,10 +8,10 @@
 UENUM(BlueprintType)
 enum class EBlockType : uint8
 {
-	Air								UMETA(DisplayName = "Air"),
-	Grass							UMETA(DisplayName = "Grass"),
+	Dirt							UMETA(DisplayName = "Dirt"),
 	Stone							UMETA(DisplayName = "Stone"),
 	Snow							UMETA(DisplayName = "Snow"),
+	Air								UMETA(DisplayName = "Air"),
 };
 
 USTRUCT()

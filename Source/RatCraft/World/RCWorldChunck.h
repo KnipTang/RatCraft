@@ -84,7 +84,7 @@ private:
 	TMap<EBlockType, class URCDataAssetBlock*> BlockDataAsset;
 	
 	TMap<FVector /*Coords*/, EBlockType> ChunckBlocksData;
-	FChunckMesh ChunckMeshes;
+	TArray<FChunckMesh> ChunckMeshes;
 
 	FVector LookAtBlockCoords;
 

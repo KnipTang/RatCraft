@@ -149,7 +149,7 @@ void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputA
 		
 		if (CurrentlyLookAtChunck->CanSpawnBlockAtGridCoords(GridCoordsNewBlock, PlayerGridCoords, GetCapsuleComponent()->GetScaledCapsuleRadius()))
 		{
-			bool bSucceeded = CurrentlyLookAtChunck->SpawnBlock(EBlockType::Grass, GridCoordsNewBlock);
+			bool bSucceeded = CurrentlyLookAtChunck->SpawnBlock(EBlockType::Dirt, GridCoordsNewBlock);
 			if (!bSucceeded)
 				return;
 	

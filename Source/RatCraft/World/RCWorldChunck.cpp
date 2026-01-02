@@ -55,9 +55,9 @@ void ARCWorldChunck::EndInteract()
 
 void ARCWorldChunck::InitChunckBlockData()
 {
-	for (int X = 0; X < WorldSettings->ChunckSize; X++)
+	for (int X = -1; X < WorldSettings->ChunckSize + 1; X++)
 	{
-		for (int Z = 0; Z < WorldSettings->ChunckSize; Z++)
+		for (int Z = -1; Z < WorldSettings->ChunckSize + 1; Z++)
 		{
 			const float NoiseHeight = GetNoiseHeightAt(X, Z);
 			int TerrainHeight = FMath::RoundToInt(NoiseHeight * WorldSettings->ChunckHeight);
@@ -75,31 +75,37 @@ void ARCWorldChunck::InitChunckBlockData()
 
 void ARCWorldChunck::RenderChunck()
 {
-	ChunckMeshes = {};
+	ChunckMeshes.SetNum(static_cast<uint8>(EBlockType::Air));
 	
 	for (TPair<FVector /*Coords*/, EBlockType> BlockData : ChunckBlocksData)
 	{
+		if (BlockData.Key.X == -1 || BlockData.Key.Y == -1 || BlockData.Key.X == 16 || BlockData.Key.Y == 16)
+			continue;
 		if (BlockData.Value == EBlockType::Air)
 			continue;
 
 		GenerateBlockFaces(BlockData.Key);
 	}
-
+	
 	ProceduralMesh->ClearAllMeshSections();
-    ProceduralMesh->CreateMeshSection(0, ChunckMeshes.Vertices, ChunckMeshes.Triangles, ChunckMeshes.Normals, ChunckMeshes.UVs, ChunckMeshes.VertexColors, ChunckMeshes.Tangents, true);
-    if (UMaterialInterface* Material = BlockDataAsset.FindChecked(EBlockType::Grass)->GetMaterial())
-    {
-    	ProceduralMesh->SetMaterial(0, Material);
-    }
+	for (uint8 i = 0; i < ChunckMeshes.Num(); i++)
+	{
+		ProceduralMesh->CreateMeshSection(i, ChunckMeshes[i].Vertices, ChunckMeshes[i].Triangles, ChunckMeshes[i].Normals, ChunckMeshes[i].UVs, ChunckMeshes[i].VertexColors, ChunckMeshes[i].Tangents, true);
+
+		UMaterialInterface* Material = BlockDataAsset.FindChecked(static_cast<EBlockType>(i))->GetMaterial();
+		ProceduralMesh->SetMaterial(i, Material);
+	}
 }
 
 void ARCWorldChunck::GenerateBlockFaces(const FVector& Coords)
 {
-	TArray<FVector>& Vertices = ChunckMeshes.Vertices;
-	TArray<int32>& Triangles = ChunckMeshes.Triangles;
-	TArray<FVector>& Normals = ChunckMeshes.Normals;
-	TArray<FVector2D>& UVs = ChunckMeshes.UVs;
-	TArray<FColor>& VertexColors = ChunckMeshes.VertexColors;
+	EBlockType BlockType = ChunckBlocksData[Coords];
+	
+	TArray<FVector>& Vertices = ChunckMeshes[static_cast<uint8>(BlockType)].Vertices;
+	TArray<int32>& Triangles = ChunckMeshes[static_cast<uint8>(BlockType)].Triangles;
+	TArray<FVector>& Normals = ChunckMeshes[static_cast<uint8>(BlockType)].Normals;
+	TArray<FVector2D>& UVs = ChunckMeshes[static_cast<uint8>(BlockType)].UVs;
+	TArray<FColor>& VertexColors = ChunckMeshes[static_cast<uint8>(BlockType)].VertexColors;
 
 	const FBlockFaceVisibility BlockFaceVisibility = GetBlockFaceVisibilityFromCoords(Coords);
 
@@ -261,12 +267,11 @@ void ARCWorldChunck::LookAtBlockChanged()
 /***************************************************/
 TArray<float> ARCWorldChunck::GeneratePerlinNoise() const
 {
-	return URCPerlinNoise::GenerateHeightMap(WorldSettings->ChunckSize, WorldSettings->ChunckSize, WorldSettings->PerlinNoiseScale, FVector2D(ChunckGridCoords.X, ChunckGridCoords.Y));
+	return URCPerlinNoise::GenerateHeightMap(WorldSettings->ChunckSize + 1, WorldSettings->ChunckSize + 1, WorldSettings->PerlinNoiseScale, FVector2D(ChunckGridCoords.X - 1, ChunckGridCoords.Y - 1));
 }
 
 float ARCWorldChunck::GetNoiseHeightAt(int X, int Z)
 {
-	URCWorldSettings::GetSettings()->BlockSize;
 	if (PerlinNoise.Num() == 0)
 		return 0.0f;
 	
@@ -285,7 +290,7 @@ EBlockType ARCWorldChunck::GetBlockTypeFromHeight(const int TerrainHeight, const
 	if (BlockHeight > TerrainHeight)
 		return EBlockType::Air;
 	else if (BlockHeight >= TerrainHeight - WorldSettings->RockLevel && BlockHeight < WorldSettings->SnowLevel)
-		return EBlockType::Grass;
+		return EBlockType::Dirt;
 	else if (BlockHeight < TerrainHeight - WorldSettings->RockLevel)
 		return EBlockType::Stone;
 	else if (BlockHeight >= WorldSettings->SnowLevel)
@@ -296,6 +301,9 @@ EBlockType ARCWorldChunck::GetBlockTypeFromHeight(const int TerrainHeight, const
 
 bool ARCWorldChunck::IsBlockAtCoords(const FVector& Coords) const
 {
+	if (Coords.Z == -1)
+		return true;
+	
 	if (!ChunckBlocksData.Contains(Coords) || ChunckBlocksData[Coords] == EBlockType::Air)
 		return false;
 	return true;
@@ -321,7 +329,7 @@ FColor ARCWorldChunck::GetBlockColorFromBlockType(const EBlockType BlockTypeToSp
 	{
 	case EBlockType::Air:
 		break;
-	case EBlockType::Grass:
+	case EBlockType::Dirt:
 		return FColor::Green;
 		break;
 	case EBlockType::Stone:
