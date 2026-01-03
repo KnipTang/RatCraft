@@ -11,6 +11,7 @@
 #include "RatCraft/Abilities/RCAbilitySystemStatics.h"
 #include "RatCraft/Framework/RCGameModeBase.h"
 #include "RatCraft/World/RCWorldChunck.h"
+#include "RatCraft/World/RCWorldManager.h"
 #include "RatCraft/World/RCWorldSettings.h"
 #include "RatCraft/World/Blocks/RCBlock.h"
 
@@ -48,11 +49,13 @@ void ARCPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	WorldSettings = URCWorldSettings::GetSettings();
+
 	if (AGameModeBase* GameMode = GetWorld()->GetAuthGameMode())
 	{
 		if (ARCGameModeBase* RCGameModeBase = Cast<ARCGameModeBase>(GameMode))
 		{
-
+			WorldManager = RCGameModeBase->GetWorldManager();
 		}
 	}
 }
@@ -140,32 +143,30 @@ void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputA
 {
 	const bool bPressed = InputActionValue.Get<bool>();
 	
-	if (!bCanPlaceBlock || !CurrentlyLookAtChunck)
+	if (!bCanPlaceBlock || !CurrentlyLookAtChunck || !WorldManager)
 		return;
 	
 	if (bPressed)
 	{
-		const FVector GridCoordsNewBlock = LookAtBlockCoords + LookAtBlockNormal;
+		FVector GridCoordsNewBlock = LookAtBlockCoords + LookAtBlockNormal;
 		
-		if (CurrentlyLookAtChunck->CanSpawnBlockAtGridCoords(GridCoordsNewBlock, PlayerGridCoords, GetCapsuleComponent()->GetScaledCapsuleRadius()))
-		{
-			bool bSucceeded = CurrentlyLookAtChunck->SpawnBlock(EBlockType::Dirt, GridCoordsNewBlock);
-			if (!bSucceeded)
-				return;
+		bool bSucceeded = WorldManager->SpawnBlock(GridCoordsNewBlock);
+
+		if (!bSucceeded)
+			return;
 	
-			bCanPlaceBlock = false;
+		bCanPlaceBlock = false;
 	
-			if (UWorld* World = GetWorld())
-				World->GetTimerManager().SetTimer(
-				BlockPlacedTimerHandle,
-				[this]()
-				 {
-					 bCanPlaceBlock = true;
-				 },
-				BlockPlacedCooldown,
-				false
-			);
-		}
+		if (UWorld* World = GetWorld())
+			World->GetTimerManager().SetTimer(
+			BlockPlacedTimerHandle,
+			[this]()
+			 {
+				 bCanPlaceBlock = true;
+			 },
+			BlockPlacedCooldown,
+			false
+		);
 	}
 }
 

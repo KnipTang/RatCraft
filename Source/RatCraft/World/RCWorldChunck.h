@@ -39,6 +39,8 @@ public:
 	bool SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords);
 	bool CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const;
 
+	const FVector& GetChunckWorldCoords() const {return ChunckWorldCoords;};
+	const FVector2D& GetChunckGridCoords() const {return ChunckGridCoords;};
 protected:
 	virtual void BeginPlay() override;
 
@@ -70,7 +72,6 @@ private:
 	EBlockType GetBlockTypeFromHeight(const int TerrainHeight, const int BlockHeight) const;
 	struct FBlockFaceVisibility GetBlockFaceVisibilityFromCoords(const FVector& Coords) const;
 	bool IsBlockAtCoords(const FVector& Coords) const;
-	FColor GetBlockColorFromBlockType(const EBlockType BlockTypeToSpawn);
 
 	FVector GetLocalGridCoords(const FVector& GridCoords) const;
 private:
@@ -91,7 +92,8 @@ private:
 	TArray<TArray<int32>> Faces;
 	TArray<float> PerlinNoise;
 
-	FVector ChunckGridCoords;
+	FVector ChunckWorldCoords;
+	FVector2D ChunckGridCoords;
 	
 	//Mining
 	FTimerHandle MiningTimerHandle;

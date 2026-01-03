@@ -15,12 +15,14 @@ class RATCRAFT_API URCWorldSettings : public UDeveloperSettings
 
 public:
 	URCWorldSettings();
+
+	float GetHalfBlockSize() const { return BlockSize / 2.f; }
+	float GetWorldChunckSize() const { return ChunckSize * BlockSize; }
 	
 	static const URCWorldSettings* GetSettings() { return GetDefault<URCWorldSettings>(); }
 	
 	UPROPERTY(Config, EditDefaultsOnly)
 	int ChunckSize = 16;
-	float WorldChunckSize;
 	UPROPERTY(Config, EditDefaultsOnly)
 	int ChunckHeight = 50;
 	UPROPERTY(Config, EditDefaultsOnly)
@@ -33,8 +35,7 @@ public:
 
 	UPROPERTY(Config, EditDefaultsOnly)
 	float BlockSize = 100.f;
-	float HalfBlockSize;
-
+	
 	TArray<FVector> FaceNormals;
 	TArray<FVector> CubeVertices;
 };

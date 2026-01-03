@@ -5,9 +5,6 @@
 
 URCWorldSettings::URCWorldSettings()
 {
-	HalfBlockSize = {BlockSize / 2.f};
-	WorldChunckSize = {ChunckSize * BlockSize};
-	
 	FaceNormals = {
 		FVector(0, -1, 0),  // South
 		FVector(0, 1, 0),   // North
@@ -18,13 +15,13 @@ URCWorldSettings::URCWorldSettings()
 	};
 
 	CubeVertices = {
-		FVector(-HalfBlockSize, -HalfBlockSize, -HalfBlockSize), // Front-bottom-left
-		FVector(HalfBlockSize, -HalfBlockSize, -HalfBlockSize),  // Front-bottom-right
-		FVector(HalfBlockSize, -HalfBlockSize, HalfBlockSize),   // Front-top-right
-		FVector(-HalfBlockSize, -HalfBlockSize, HalfBlockSize),  // Front-top-left
-		FVector(-HalfBlockSize, HalfBlockSize, -HalfBlockSize),  // Back-bottom-left
-		FVector(HalfBlockSize, HalfBlockSize, -HalfBlockSize),   // Back-bottom-right
-		FVector(HalfBlockSize, HalfBlockSize, HalfBlockSize),    // Back-top-right
-		FVector(-HalfBlockSize, HalfBlockSize, HalfBlockSize)    // Back-top-left
+		FVector(-GetHalfBlockSize(), -GetHalfBlockSize(), -GetHalfBlockSize()), // Front-bottom-left
+		FVector(GetHalfBlockSize(), -GetHalfBlockSize(), -GetHalfBlockSize()),  // Front-bottom-right
+		FVector(GetHalfBlockSize(), -GetHalfBlockSize(), GetHalfBlockSize()),   // Front-top-right
+		FVector(-GetHalfBlockSize(), -GetHalfBlockSize(), GetHalfBlockSize()),  // Front-top-left
+		FVector(-GetHalfBlockSize(), GetHalfBlockSize(), -GetHalfBlockSize()),  // Back-bottom-left
+		FVector(GetHalfBlockSize(), GetHalfBlockSize(), -GetHalfBlockSize()),   // Back-bottom-right
+		FVector(GetHalfBlockSize(), GetHalfBlockSize(), GetHalfBlockSize()),    // Back-top-right
+		FVector(-GetHalfBlockSize(), GetHalfBlockSize(), GetHalfBlockSize())    // Back-top-left
 	};
 }

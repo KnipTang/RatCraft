@@ -28,6 +28,9 @@ private:
 	class UCameraComponent* ViewCam;
 	UPROPERTY()
 	UCharacterMovementComponent* MovementComp;
+
+	UPROPERTY()
+	const class URCWorldSettings* WorldSettings;
 	
 	/***************************************************/
 	/*						INPUT						/
@@ -60,6 +63,8 @@ private:
 	float InteractDistance = 500.f;
 	
 private:
+	UPROPERTY()
+	class ARCWorldManager* WorldManager;
 	UPROPERTY()
 	class ARCWorldChunck* CurrentlyLookAtChunck;
 	

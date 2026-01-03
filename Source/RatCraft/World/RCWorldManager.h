@@ -20,6 +20,10 @@ public:
 	virtual void BeginPlay() override;
 
 	void AddChunck(int X, int Y);
+
+	bool SpawnBlock(FVector& Coords);
+
+	class ARCWorldChunck* GetChunkByChunkCoords(const FVector2D& ChunkCoords) const { return AllChunks.FindChecked(ChunkCoords); };
 private:
 	UPROPERTY()
 	const class URCWorldSettings* WorldSettings;

@@ -12,13 +12,13 @@ void ARCGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//FActorSpawnParameters SpawnParams;
-	//SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	//
-	//WorldManager = GetWorld()->SpawnActor<ARCWorldManager>(
-	//	WorldManagerClass, 
-	//	FVector(0, 0, 0), 
-	//	FRotator::ZeroRotator, 
-	//	SpawnParams
-	//);
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	
+	WorldManager = GetWorld()->SpawnActor<ARCWorldManager>(
+		WorldManagerClass, 
+		FVector(0, 0, 0), 
+		FRotator::ZeroRotator, 
+		SpawnParams
+	);
 }

@@ -22,5 +22,7 @@ public:
 	class ARCWorldManager* GetWorldManager() const { return WorldManager; }
 private:
 	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class ARCWorldManager> WorldManagerClass;
+	UPROPERTY()
 	class ARCWorldManager* WorldManager;
 };
