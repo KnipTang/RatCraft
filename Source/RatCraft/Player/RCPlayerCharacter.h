@@ -82,4 +82,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	float BlockPlacedCooldown = 0.1f;
 	FTimerHandle BlockPlacedTimerHandle;
+
+	UPROPERTY(EditDefaultsOnly, Category = "World Management")
+	float UpdateWorldRenderCooldown = 1.f;
+	FTimerHandle UpdateWorldRenderTimerHandle;
 };

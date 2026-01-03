@@ -32,6 +32,8 @@ public:
 
 	virtual void OnInteract() override;
 	virtual void EndInteract() override;
+
+	void SetRender(const bool Render);
 	
 	void SetCurrentlyLookAtBlock(const FVector& Coords);
 	bool IsMining() const { return bIsMining; }
@@ -80,6 +82,8 @@ private:
 	
 	UPROPERTY(VisibleAnywhere)
 	class UProceduralMeshComponent* ProceduralMesh;
+
+	bool bIsRendered;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Blocks")
 	TMap<EBlockType, class URCDataAssetBlock*> BlockDataAsset;

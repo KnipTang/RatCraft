@@ -19,12 +19,17 @@ public:
 	
 	virtual void BeginPlay() override;
 
+	void HandleChunckLoading(const FVector& PlayerCoords);
+
+	void RenderChunck(const FVector2D& Coords);
 	void AddChunck(int X, int Y);
 
 	bool SpawnBlock(FVector& Coords);
 
 	class ARCWorldChunck* GetChunkByChunkCoords(const FVector2D& ChunkCoords) const { return AllChunks.FindChecked(ChunkCoords); };
 private:
+	FVector2D GetChunkCoords(const FVector& WorldCoords);
+	
 	UPROPERTY()
 	const class URCWorldSettings* WorldSettings;
 	
@@ -32,4 +37,6 @@ private:
 	TSubclassOf<class ARCWorldChunck> ChunksClass;
 	UPROPERTY()
 	TMap<FVector2D, class ARCWorldChunck*> AllChunks;
+	UPROPERTY()
+	TMap<FVector2D, class ARCWorldChunck*> RenderedChunks;
 };

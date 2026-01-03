@@ -50,6 +50,7 @@ void ARCPlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	WorldSettings = URCWorldSettings::GetSettings();
+	PlayerGridCoords = GetActorLocation() / WorldSettings->BlockSize;
 
 	if (AGameModeBase* GameMode = GetWorld()->GetAuthGameMode())
 	{
@@ -58,6 +59,17 @@ void ARCPlayerCharacter::BeginPlay()
 			WorldManager = RCGameModeBase->GetWorldManager();
 		}
 	}
+
+	if (UWorld* World = GetWorld())
+		World->GetTimerManager().SetTimer(
+		UpdateWorldRenderTimerHandle,
+		[this]()
+		 {
+			WorldManager->HandleChunckLoading(PlayerGridCoords);
+		 },
+		UpdateWorldRenderCooldown,
+		true
+	);
 }
 
 void ARCPlayerCharacter::Tick(float DeltaSeconds)
@@ -69,8 +81,11 @@ void ARCPlayerCharacter::Tick(float DeltaSeconds)
 		LookAtChunckChanged(LookAtChunck);
 	}
 
+	//Player is moving
 	if (MovementComp->Velocity != FVector::ZeroVector)
-		PlayerGridCoords = GetActorLocation() / URCWorldSettings::GetSettings()->BlockSize;
+	{
+		PlayerGridCoords = GetActorLocation() / WorldSettings->BlockSize;
+	}
 }
 
 void ARCPlayerCharacter::PawnClientRestart()
@@ -151,7 +166,6 @@ void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputA
 		FVector GridCoordsNewBlock = LookAtBlockCoords + LookAtBlockNormal;
 		
 		bool bSucceeded = WorldManager->SpawnBlock(GridCoordsNewBlock);
-
 		if (!bSucceeded)
 			return;
 	

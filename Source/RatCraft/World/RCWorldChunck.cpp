@@ -54,6 +54,24 @@ void ARCWorldChunck::EndInteract()
 	StopMining();
 }
 
+void ARCWorldChunck::SetRender(const bool Render)
+{
+	if (bIsRendered == Render)
+		return;
+
+	bIsRendered = Render;
+	
+	if (Render)
+	{
+		RenderChunck();
+	}
+	else
+	{
+		ChunckMeshes = {};
+		ProceduralMesh->ClearAllMeshSections();
+	}
+}
+
 void ARCWorldChunck::InitChunckBlockData()
 {
 	//for (int X = -1; X < WorldSettings->ChunckSize + 1; X++)

@@ -15,11 +15,41 @@ ARCWorldManager::ARCWorldManager()
 void ARCWorldManager::BeginPlay()
 {
 	Super::BeginPlay();
+}
 
-	AddChunck(0, 0);
-	AddChunck(1, 0);
-	AddChunck(2, 0);
-		AddChunck(2, 1);
+void ARCWorldManager::HandleChunckLoading(const FVector& PlayerCoords)
+{
+	const FVector2D ChunkCoords = GetChunkCoords(PlayerCoords);
+
+	for (const TPair<FVector2D, class ARCWorldChunck*> Chunck : RenderedChunks)
+	{
+		Chunck.Value->SetRender(false); 
+	}
+
+	for (int x = -1; x <= 1; x++)
+	{
+		for (int y = -1; y <= 1; y++)
+		{
+			RenderChunck(FVector2D(ChunkCoords.X + x, ChunkCoords.Y + y));
+		}
+	}
+}
+
+void ARCWorldManager::RenderChunck(const FVector2D& Coords)
+{
+	if (!AllChunks.Contains(Coords))
+	{
+		AddChunck(Coords.X, Coords.Y);
+	}
+
+	ARCWorldChunck* RenderedChunk = AllChunks.FindChecked(Coords);
+
+	if (!RenderedChunks.Contains(Coords))
+	{
+		RenderedChunks.Emplace(Coords,RenderedChunk);
+	}
+	
+	RenderedChunk->SetRender(true);
 }
 
 void ARCWorldManager::AddChunck(int X, int Y)
@@ -37,28 +67,33 @@ void ARCWorldManager::AddChunck(int X, int Y)
 	);
 
 	AllChunks.Emplace(FVector2D(X, Y) ,NewChunk);
+	NewChunk->SetRender(false);
 }
 
 bool ARCWorldManager::SpawnBlock(FVector& Coords)
 {
-	int CoordsX = static_cast<int>(Coords.X);
-	int CoordsY = static_cast<int>(Coords.Y);
-	
-	int ChunkCoordsX = CoordsX / (WorldSettings->ChunckSize);
-	int ChunkCoordsY = CoordsY / (WorldSettings->ChunckSize);
-	FVector2D ChunkCoords = FVector2D(ChunkCoordsX, ChunkCoordsY);
-	
-	FVector SpawnCoord = FVector(
-		CoordsX % (WorldSettings->ChunckSize),
-		CoordsY % (WorldSettings->ChunckSize),
-		Coords.Z);
+	FVector2D ChunkCoords = GetChunkCoords(Coords);
 
 	if (!AllChunks.Contains(ChunkCoords))
 	{
-		AddChunck(ChunkCoordsX, ChunkCoordsY);	
+		AddChunck(ChunkCoords.X, ChunkCoords.Y);	
 	}
 	
 	ARCWorldChunck* FoundChunk = AllChunks.FindChecked(ChunkCoords);
-	
+
 	return FoundChunk->SpawnBlock(EBlockType::Dirt, Coords);
+}
+
+FVector2D ARCWorldManager::GetChunkCoords(const FVector& WorldCoords)
+{
+	int CoordsX = static_cast<int>(WorldCoords.X);
+	int CoordsY = static_cast<int>(WorldCoords.Y);
+
+	if (CoordsX < 0) CoordsX -= WorldSettings->ChunckSize;
+	if (CoordsY < 0) CoordsY -= WorldSettings->ChunckSize;
+	
+	int ChunkCoordsX = CoordsX / WorldSettings->ChunckSize;
+	int ChunkCoordsY = CoordsY / WorldSettings->ChunckSize;
+	
+	return FVector2D(ChunkCoordsX, ChunkCoordsY);
 }
