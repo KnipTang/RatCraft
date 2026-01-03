@@ -89,8 +89,8 @@ FVector2D ARCWorldManager::GetChunkCoords(const FVector& WorldCoords)
 	int CoordsX = static_cast<int>(WorldCoords.X);
 	int CoordsY = static_cast<int>(WorldCoords.Y);
 
-	if (CoordsX < 0) CoordsX -= WorldSettings->ChunckSize;
-	if (CoordsY < 0) CoordsY -= WorldSettings->ChunckSize;
+	if (CoordsX < 0) CoordsX -= WorldSettings->ChunckSize - 1;
+	if (CoordsY < 0) CoordsY -= WorldSettings->ChunckSize - 1;
 	
 	int ChunkCoordsX = CoordsX / WorldSettings->ChunckSize;
 	int ChunkCoordsY = CoordsY / WorldSettings->ChunckSize;
