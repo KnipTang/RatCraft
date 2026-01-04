@@ -145,36 +145,32 @@ void ARCWorldChunck::GenerateBlockFaces(const FVector& Coords)
 		if (!FaceVisible)
 			continue;
 
-		FinalFaces.Add(Faces[FaceIndex]);
-	}
-	
-    for (int32 FaceIndex = 0; FaceIndex < FinalFaces.Num(); FaceIndex++)
-    {
-        const TArray<int32>& Face = FinalFaces[FaceIndex];
-        int32 BaseIndex = Vertices.Num();
+		//FinalFaces.Add(Faces[FaceIndex]);
 
-        for (int32 i = 0; i < 4; i++)
-        {
-            Vertices.Add(WorldSettings->CubeVertices[Face[i]] + (Coords * WorldSettings->BlockSize) + WorldSettings->GetHalfBlockSize());
-        	
-            if (i == 0) UVs.Add(FVector2D(0, 1));
-            else if (i == 1) UVs.Add(FVector2D(1, 1));
-            else if (i == 2) UVs.Add(FVector2D(1, 0));
-            else UVs.Add(FVector2D(0, 0));
-        	
-        	VertexColors.Emplace(255, 255, 255, 255);
+		const TArray<int32>& Face = Faces[FaceIndex];
+		int32 BaseIndex = Vertices.Num();
 
-        	Normals.Add(WorldSettings->FaceNormals[FaceIndex]);
-        }
+		for (int32 i = 0; i < 4; i++)
+		{
+			Vertices.Add(WorldSettings->CubeVertices[Face[i]] + (Coords * WorldSettings->BlockSize) + WorldSettings->GetHalfBlockSize());
+        	
+			if (i == 0) UVs.Add(FVector2D(0, 1));
+			else if (i == 1) UVs.Add(FVector2D(1, 1));
+			else if (i == 2) UVs.Add(FVector2D(1, 0));
+			else UVs.Add(FVector2D(0, 0));
+        	
+			VertexColors.Emplace(255, 255, 255, 255);
+			Normals.Add(WorldSettings->FaceNormals[FaceIndex]);
+		}
     	
-        Triangles.Add(BaseIndex);
-        Triangles.Add(BaseIndex + 1);
-        Triangles.Add(BaseIndex + 2);
+		Triangles.Add(BaseIndex);
+		Triangles.Add(BaseIndex + 1);
+		Triangles.Add(BaseIndex + 2);
         
-        Triangles.Add(BaseIndex);
-        Triangles.Add(BaseIndex + 2);
-        Triangles.Add(BaseIndex + 3);
-    }
+		Triangles.Add(BaseIndex);
+		Triangles.Add(BaseIndex + 2);
+		Triangles.Add(BaseIndex + 3);
+	}
 }
 
 void ARCWorldChunck::UpdateChunckMesh()
@@ -193,9 +189,12 @@ void ARCWorldChunck::SetCurrentlyLookAtBlock(const FVector& Coords)
 	}
 }
 
-bool ARCWorldChunck::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords)
+bool ARCWorldChunck::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight)
 {
 	const FVector LocalGridCoords = GetLocalGridCoords(GridCoords);
+
+	if (!CanSpawnBlockAtGridCoords(GridCoords, PlayerGridCoords, ColliderSize, ColliderHeight))
+		return false;
 
 	if (!ChunckBlocksData.Contains(LocalGridCoords))
 		return false;
@@ -207,33 +206,35 @@ bool ARCWorldChunck::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector
 	return true;
 }
 
-bool ARCWorldChunck::CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const
+bool ARCWorldChunck::CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight) const
 {
 	return (
-		!IsPlayerObstructing(NewBlockGridCoords, PlayerGridCoords, PlayerColliderSize)
+		IsPlayerObstructing(NewBlockGridCoords, PlayerGridCoords, ColliderSize, ColliderHeight)
 		&& NewBlockGridCoords.Z - ChunckWorldCoords.Z <= WorldSettings->ChunckHeight
 		);
 }
 
-bool ARCWorldChunck::IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const
+bool ARCWorldChunck::IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, float ColliderSize, float ColliderHeight) const
 {
-	const float HalfBlockSizeCoordsSize = WorldSettings->GetHalfBlockSize() / WorldSettings->BlockSize;
-	const float Distance = 
-		FMath::Abs((NewBlockGridCoords.X + HalfBlockSizeCoordsSize) - PlayerGridCoords.X) +
-		FMath::Abs((NewBlockGridCoords.Y + HalfBlockSizeCoordsSize) - PlayerGridCoords.Y) +
-		FMath::Abs((NewBlockGridCoords.Z + HalfBlockSizeCoordsSize) - PlayerGridCoords.Z);
+	ColliderSize = ColliderSize / WorldSettings->BlockSize;
+	ColliderHeight = ColliderHeight / WorldSettings->BlockSize;
 	
-	if (Distance >= 1 + PlayerColliderSize / WorldSettings->BlockSize)
-	{
-		return false;
-	}
-    
-	return true;
+	const float Distance = 
+		FMath::Abs((NewBlockGridCoords.X + 0.5f) - (PlayerGridCoords.X)) +
+		FMath::Abs((NewBlockGridCoords.Y + 0.5f) - (PlayerGridCoords.Y)) +
+		FMath::Abs((NewBlockGridCoords.Z + 0.5f) - (PlayerGridCoords.Z - ColliderHeight));
+
+	UE_LOG(LogTemp, Warning, TEXT("%f"), Distance);
+	
+	return Distance >= 1.5f;
 }
 
 void ARCWorldChunck::StartMining()
 {
 	bIsMining = true;
+
+	if (LookAtBlockCoords.Z == 0)
+		return;
 
 	if (!ChunckBlocksData.Contains(LookAtBlockCoords))
 		return;

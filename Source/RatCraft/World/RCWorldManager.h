@@ -24,7 +24,7 @@ public:
 	void RenderChunck(const FVector2D& Coords);
 	void AddChunck(int X, int Y);
 
-	bool SpawnBlock(FVector& Coords);
+	bool SpawnBlock(FVector& Coords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight);
 
 	class ARCWorldChunck* GetChunkByChunkCoords(const FVector2D& ChunkCoords) const { return AllChunks.FindChecked(ChunkCoords); };
 private:

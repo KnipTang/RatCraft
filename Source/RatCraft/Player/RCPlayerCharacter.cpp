@@ -165,7 +165,7 @@ void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputA
 	{
 		FVector GridCoordsNewBlock = LookAtBlockCoords + LookAtBlockNormal;
 		
-		bool bSucceeded = WorldManager->SpawnBlock(GridCoordsNewBlock);
+		bool bSucceeded = WorldManager->SpawnBlock(GridCoordsNewBlock, PlayerGridCoords, GetCapsuleComponent()->GetScaledCapsuleRadius(), GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 		if (!bSucceeded)
 			return;
 	

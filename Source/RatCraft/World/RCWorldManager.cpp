@@ -74,7 +74,7 @@ void ARCWorldManager::AddChunck(int X, int Y)
 	NewChunk->SetRender(false);
 }
 
-bool ARCWorldManager::SpawnBlock(FVector& Coords)
+bool ARCWorldManager::SpawnBlock(FVector& Coords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight)
 {
 	FVector2D ChunkCoords = GetChunkCoords(Coords);
 
@@ -85,7 +85,7 @@ bool ARCWorldManager::SpawnBlock(FVector& Coords)
 	
 	ARCWorldChunck* FoundChunk = AllChunks.FindChecked(ChunkCoords);
 
-	return FoundChunk->SpawnBlock(EBlockType::Dirt, Coords);
+	return FoundChunk->SpawnBlock(EBlockType::Dirt, Coords, PlayerGridCoords, ColliderSize, ColliderHeight);
 }
 
 FVector2D ARCWorldManager::GetChunkCoords(const FVector& WorldCoords)

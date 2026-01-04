@@ -39,11 +39,11 @@ public:
 	void SetCurrentlyLookAtBlock(const FVector& Coords);
 	bool IsMining() const { return bIsMining; }
 	
-	bool SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords);
-	bool CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const;
+	bool SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight);
+	bool CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight) const;
 
-	const FVector& GetChunckWorldCoords() const {return ChunckWorldCoords;};
-	const FVector2D& GetChunckGridCoords() const {return ChunckGridCoords;};
+	const FVector& GetChunckWorldCoords() const {return ChunckWorldCoords;}
+	const FVector2D& GetChunckGridCoords() const {return ChunckGridCoords;}
 protected:
 	virtual void BeginPlay() override;
 
@@ -56,7 +56,7 @@ private:
 	void UpdateChunckMesh();
 
 	//PLACEMENT
-	bool IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float PlayerColliderSize) const;
+	bool IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, float ColliderSize, float ColliderHeight) const;
 
 	//MINING
 	void StartMining();
