@@ -36,6 +36,9 @@ public:
 	UPROPERTY(Config, EditDefaultsOnly)
 	float BlockSize = 100.f;
 	
+	UPROPERTY(Config, EditDefaultsOnly)
+	int RenderDistance = 16;
+	
 	TArray<FVector> FaceNormals;
 	TArray<FVector> CubeVertices;
 };

@@ -2,15 +2,15 @@
 
 
 #include "RCPerlinNoise.h"
-
+#pragma optimize("", off)
 TArray<float> URCPerlinNoise::GenerateHeightMap(int32 Width, int32 Height, float Scale, FVector2D Offset)
 {
 	TArray<float> HeightMap;
 	HeightMap.SetNum(Width * Height);
     
-	for (int32 y = 0; y < Height; y++)
+	for (int32 x = 0; x < Width; x++)
 	{
-		for (int32 x = 0; x < Width; x++)
+		for (int32 y = 0; y < Height; y++)
 		{
 			const float SampleX = (x + Offset.X) * Scale;
 			const float SampleY = (y + Offset.Y) * Scale;

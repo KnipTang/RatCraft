@@ -19,16 +19,20 @@ void ARCWorldManager::BeginPlay()
 
 void ARCWorldManager::HandleChunckLoading(const FVector& PlayerCoords)
 {
-	const FVector2D ChunkCoords = GetChunkCoords(PlayerCoords);
-
-	for (const TPair<FVector2D, class ARCWorldChunck*> Chunck : RenderedChunks)
+	for (class ARCWorldChunck* Chunck : RenderedChunks)
 	{
-		Chunck.Value->SetRender(false); 
+		Chunck->SetRender(false);
 	}
 
-	for (int x = -1; x <= 1; x++)
+	RenderedChunks.Empty();
+	const FVector2D ChunkCoords = GetChunkCoords(PlayerCoords);
+
+	int ChunkDistance = WorldSettings->RenderDistance / WorldSettings->ChunckSize;
+	ChunkDistance++;
+	
+	for (int x = -ChunkDistance; x <= ChunkDistance; x++)
 	{
-		for (int y = -1; y <= 1; y++)
+		for (int y = -ChunkDistance; y <= ChunkDistance; y++)
 		{
 			RenderChunck(FVector2D(ChunkCoords.X + x, ChunkCoords.Y + y));
 		}
@@ -44,9 +48,9 @@ void ARCWorldManager::RenderChunck(const FVector2D& Coords)
 
 	ARCWorldChunck* RenderedChunk = AllChunks.FindChecked(Coords);
 
-	if (!RenderedChunks.Contains(Coords))
+	if (!RenderedChunks.Contains(RenderedChunk))
 	{
-		RenderedChunks.Emplace(Coords,RenderedChunk);
+		RenderedChunks.Emplace(RenderedChunk);
 	}
 	
 	RenderedChunk->SetRender(true);

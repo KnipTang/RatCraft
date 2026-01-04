@@ -38,5 +38,5 @@ private:
 	UPROPERTY()
 	TMap<FVector2D, class ARCWorldChunck*> AllChunks;
 	UPROPERTY()
-	TMap<FVector2D, class ARCWorldChunck*> RenderedChunks;
+	TArray<class ARCWorldChunck*> RenderedChunks;
 };

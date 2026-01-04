@@ -63,12 +63,11 @@ void ARCWorldChunck::SetRender(const bool Render)
 	
 	if (Render)
 	{
-		RenderChunck();
+		ProceduralMesh->SetVisibility(true);
 	}
 	else
 	{
-		ChunckMeshes = {};
-		ProceduralMesh->ClearAllMeshSections();
+		ProceduralMesh->SetVisibility(false);
 	}
 }
 
@@ -78,11 +77,12 @@ void ARCWorldChunck::InitChunckBlockData()
 	//{
 	//	for (int Z = -1; Z < WorldSettings->ChunckSize + 1; Z++)
 	//	{
+	//		const float NoiseHeight = GetNoiseHeightAt(X + 1, Z + 1);
 	for (int X = 0; X < WorldSettings->ChunckSize; X++)
 	{
 		for (int Z = 0; Z < WorldSettings->ChunckSize; Z++)
 		{
-			const float NoiseHeight = GetNoiseHeightAt(X, Z);
+			const float NoiseHeight = GetNoiseHeightAt(X , Z);
 			int TerrainHeight = FMath::RoundToInt(NoiseHeight * WorldSettings->ChunckHeight);
 			TerrainHeight = FMath::Clamp(TerrainHeight, 0, WorldSettings->ChunckHeight - 1);
 			
@@ -103,10 +103,10 @@ void ARCWorldChunck::RenderChunck()
 	
 	for (TPair<FVector /*Coords*/, EBlockType> BlockData : ChunckBlocksData)
 	{
-		//if (BlockData.Key.X == -1 || BlockData.Key.Y == -1 || BlockData.Key.X == WorldSettings->ChunckSize || BlockData.Key.Y == WorldSettings->ChunckSize)
-		//	continue;
 		if (BlockData.Value == EBlockType::Air)
 			continue;
+		//if (BlockData.Key.X == -1 || BlockData.Key.Y == -1 || BlockData.Key.X == WorldSettings->ChunckSize || BlockData.Key.Y == WorldSettings->ChunckSize)
+		//	continue;
 
 		GenerateBlockFaces(BlockData.Key);
 	}
@@ -162,7 +162,9 @@ void ARCWorldChunck::GenerateBlockFaces(const FVector& Coords)
             else if (i == 2) UVs.Add(FVector2D(1, 0));
             else UVs.Add(FVector2D(0, 0));
         	
-            VertexColors.Emplace(255, 255, 255, 255);
+        	VertexColors.Emplace(255, 255, 255, 255);
+
+        	Normals.Add(WorldSettings->FaceNormals[FaceIndex]);
         }
     	
         Triangles.Add(BaseIndex);
@@ -172,11 +174,6 @@ void ARCWorldChunck::GenerateBlockFaces(const FVector& Coords)
         Triangles.Add(BaseIndex);
         Triangles.Add(BaseIndex + 2);
         Triangles.Add(BaseIndex + 3);
-    	
-        for (int32 i = 0; i < 4; i++)
-        {
-            Normals.Add(WorldSettings->FaceNormals[FaceIndex]);
-        }
     }
 }
 
@@ -299,7 +296,7 @@ void ARCWorldChunck::LookAtBlockChanged()
 /***************************************************/
 TArray<float> ARCWorldChunck::GeneratePerlinNoise() const
 {
-	//return URCPerlinNoise::GenerateHeightMap(WorldSettings->ChunckSize + 2, WorldSettings->ChunckSize + 2, WorldSettings->PerlinNoiseScale, FVector2D(ChunckGridCoords.X - 1, ChunckGridCoords.Y - 1));
+	//return URCPerlinNoise::GenerateHeightMap(WorldSettings->ChunckSize + 2, WorldSettings->ChunckSize + 2, WorldSettings->PerlinNoiseScale, FVector2D(ChunckGridCoords.X - (1.f/WorldSettings->ChunckSize), ChunckGridCoords.Y - (1.f/WorldSettings->ChunckSize)));
 	return URCPerlinNoise::GenerateHeightMap(WorldSettings->ChunckSize, WorldSettings->ChunckSize, WorldSettings->PerlinNoiseScale, FVector2D(ChunckWorldCoords.X, ChunckWorldCoords.Y));
 
 }
@@ -309,8 +306,9 @@ float ARCWorldChunck::GetNoiseHeightAt(int X, int Z)
 	if (PerlinNoise.Num() == 0)
 		return 0.0f;
 	
-	const int NoiseIndex = X + Z * WorldSettings->ChunckSize;
-    
+	//const int NoiseIndex = X + Z * (WorldSettings->ChunckSize + 2);
+	const int NoiseIndex = X + Z * (WorldSettings->ChunckSize);
+	
 	if (NoiseIndex >= 0 && NoiseIndex < PerlinNoise.Num())
 	{
 		return PerlinNoise[NoiseIndex];
@@ -345,12 +343,12 @@ bool ARCWorldChunck::IsBlockAtCoords(const FVector& Coords) const
 
 FBlockFaceVisibility ARCWorldChunck::GetBlockFaceVisibilityFromCoords(const FVector& Coords) const
 {
-	const bool Top		= !IsBlockAtCoords(FVector(Coords.X, Coords.Y, Coords.Z + 1));
-	const bool Bottom	= !IsBlockAtCoords(FVector(Coords.X, Coords.Y, Coords.Z - 1));
-	const bool North	= !IsBlockAtCoords(FVector(Coords.X, Coords.Y + 1, Coords.Z));
-	const bool South	= !IsBlockAtCoords(FVector(Coords.X, Coords.Y - 1, Coords.Z));
-	const bool East		= !IsBlockAtCoords(FVector(Coords.X + 1, Coords.Y, Coords.Z));
-	const bool West		= !IsBlockAtCoords(FVector(Coords.X - 1, Coords.Y, Coords.Z));
+	const bool Top		= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y, Coords.Z + 1)) );
+	const bool Bottom	= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y, Coords.Z - 1)) && (Coords.Z - 1 >= 0) );
+	const bool North	= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y + 1, Coords.Z)) && (Coords.Y + 1 <= WorldSettings->ChunckSize) );
+	const bool South	= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y - 1, Coords.Z)));
+	const bool East		= ( !IsBlockAtCoords(FVector(Coords.X + 1, Coords.Y, Coords.Z)) && (Coords.X + 1 <= WorldSettings->ChunckSize) );
+	const bool West		= ( !IsBlockAtCoords(FVector(Coords.X - 1, Coords.Y, Coords.Z)));
 		
 	const FBlockFaceVisibility BlockFaceVisibility{Top, Bottom, North, East, South, West};
 

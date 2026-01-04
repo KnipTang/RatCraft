@@ -34,6 +34,7 @@ public:
 	virtual void EndInteract() override;
 
 	void SetRender(const bool Render);
+	bool GetIsRender() const { return bIsRendered; };
 	
 	void SetCurrentlyLookAtBlock(const FVector& Coords);
 	bool IsMining() const { return bIsMining; }
