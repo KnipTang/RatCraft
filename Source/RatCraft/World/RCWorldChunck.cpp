@@ -84,8 +84,7 @@ void ARCWorldChunck::InitChunckBlockData()
 		{
 			const float NoiseHeight = GetNoiseHeightAt(X , Z);
 			int TerrainHeight = FMath::RoundToInt(NoiseHeight * WorldSettings->ChunckHeight);
-			TerrainHeight = FMath::Clamp(TerrainHeight, 0, WorldSettings->ChunckHeight - 1);
-			
+			TerrainHeight = FMath::Clamp(TerrainHeight, 0, WorldSettings->ChunckHeight);
 			for (int Y = 0; Y < WorldSettings->ChunckHeight; Y++)
 			{
 				const FVector Coords = FVector(X, Z, Y);
@@ -137,16 +136,12 @@ void ARCWorldChunck::GenerateBlockFaces(const FVector& Coords)
 
 	const FBlockFaceVisibility BlockFaceVisibility = GetBlockFaceVisibilityFromCoords(Coords);
 
-	TArray<TArray<int32>> FinalFaces {};
-
 	for (int32 FaceIndex = 0; FaceIndex < Faces.Num(); FaceIndex++)
 	{
 		bool FaceVisible = BlockFaceVisibility.Faces[FaceIndex];
 		if (!FaceVisible)
 			continue;
-
-		//FinalFaces.Add(Faces[FaceIndex]);
-
+		
 		const TArray<int32>& Face = Faces[FaceIndex];
 		int32 BaseIndex = Vertices.Num();
 
@@ -159,7 +154,7 @@ void ARCWorldChunck::GenerateBlockFaces(const FVector& Coords)
 			else if (i == 2) UVs.Add(FVector2D(1, 0));
 			else UVs.Add(FVector2D(0, 0));
         	
-			VertexColors.Emplace(255, 255, 255, 255);
+			VertexColors.Emplace(255, 255, 255, FaceIndex);
 			Normals.Add(WorldSettings->FaceNormals[FaceIndex]);
 		}
     	
@@ -216,7 +211,6 @@ bool ARCWorldChunck::CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords
 
 bool ARCWorldChunck::IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, float ColliderSize, float ColliderHeight) const
 {
-	ColliderSize = ColliderSize / WorldSettings->BlockSize;
 	ColliderHeight = ColliderHeight / WorldSettings->BlockSize;
 	
 	const float Distance = 
@@ -318,20 +312,6 @@ float ARCWorldChunck::GetNoiseHeightAt(int X, int Z)
 	return 0.0f;
 }
 
-EBlockType ARCWorldChunck::GetBlockTypeFromHeight(const int TerrainHeight, const int BlockHeight) const
-{
-	if (BlockHeight > TerrainHeight)
-		return EBlockType::Air;
-	else if (BlockHeight >= TerrainHeight - WorldSettings->RockLevel && BlockHeight < WorldSettings->SnowLevel)
-		return EBlockType::Dirt;
-	else if (BlockHeight < TerrainHeight - WorldSettings->RockLevel)
-		return EBlockType::Stone;
-	else if (BlockHeight >= WorldSettings->SnowLevel)
-		return EBlockType::Snow;
-	
-	return EBlockType::Air;
-}
-
 bool ARCWorldChunck::IsBlockAtCoords(const FVector& Coords) const
 {
 	if (Coords.Z == -1)
@@ -344,14 +324,14 @@ bool ARCWorldChunck::IsBlockAtCoords(const FVector& Coords) const
 
 FBlockFaceVisibility ARCWorldChunck::GetBlockFaceVisibilityFromCoords(const FVector& Coords) const
 {
+	const bool South	= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y - 1, Coords.Z)));
+	const bool North	= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y + 1, Coords.Z)) && (Coords.Y + 1 <= WorldSettings->ChunckSize) );
+	const bool West		= ( !IsBlockAtCoords(FVector(Coords.X - 1, Coords.Y, Coords.Z)));
+	const bool East		= ( !IsBlockAtCoords(FVector(Coords.X + 1, Coords.Y, Coords.Z)) && (Coords.X + 1 <= WorldSettings->ChunckSize) );
 	const bool Top		= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y, Coords.Z + 1)) );
 	const bool Bottom	= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y, Coords.Z - 1)) && (Coords.Z - 1 >= 0) );
-	const bool North	= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y + 1, Coords.Z)) && (Coords.Y + 1 <= WorldSettings->ChunckSize) );
-	const bool South	= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y - 1, Coords.Z)));
-	const bool East		= ( !IsBlockAtCoords(FVector(Coords.X + 1, Coords.Y, Coords.Z)) && (Coords.X + 1 <= WorldSettings->ChunckSize) );
-	const bool West		= ( !IsBlockAtCoords(FVector(Coords.X - 1, Coords.Y, Coords.Z)));
 		
-	const FBlockFaceVisibility BlockFaceVisibility{Top, Bottom, North, East, South, West};
+	const FBlockFaceVisibility BlockFaceVisibility{South, North, West, East, Top, Bottom};
 
 	return BlockFaceVisibility;
 }

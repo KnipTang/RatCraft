@@ -72,7 +72,6 @@ private:
 	float GetNoiseHeightAt(int X, int Z);
 	TArray<float> GeneratePerlinNoise() const;
 	
-	EBlockType GetBlockTypeFromHeight(const int TerrainHeight, const int BlockHeight) const;
 	struct FBlockFaceVisibility GetBlockFaceVisibilityFromCoords(const FVector& Coords) const;
 	bool IsBlockAtCoords(const FVector& Coords) const;
 
