@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "ProceduralMeshComponent.h"
-#include "Blocks/RCBlock.h"
+#include "Blocks/RCBlockStatics.h"
 #include "RatCraft/Interactables/RCInteractable.h"
 #include "RCWorldChunck.generated.h"
 
@@ -42,10 +42,14 @@ public:
 	bool SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight);
 	bool CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight) const;
 
+	//FVector DisplayWireframe(const EBlockType BlockTypeToSpawn, const FVector& GridCoords);
+	
 	const FVector& GetChunckWorldCoords() const {return ChunckWorldCoords;}
 	const FVector2D& GetChunckGridCoords() const {return ChunckGridCoords;}
 
 	TArray<float> GetPerlinNoise() const { return PerlinNoise; }
+
+	bool IsBlockAtCoords(const FVector& Coords) const;
 protected:
 	virtual void BeginPlay() override;
 
@@ -75,7 +79,6 @@ private:
 	TArray<float> GeneratePerlinNoise() const;
 	
 	struct FBlockFaceVisibility GetBlockFaceVisibilityFromCoords(const FVector& Coords) const;
-	bool IsBlockAtCoords(const FVector& Coords) const;
 
 	FVector GetLocalGridCoords(const FVector& GridCoords) const;
 private:
@@ -85,6 +88,8 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	class UProceduralMeshComponent* ProceduralMesh;
 
+	
+	
 	bool bIsRendered;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Blocks")

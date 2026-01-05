@@ -4,6 +4,7 @@
 #include "RCWorldManager.h"
 #include "RCWorldChunck.h"
 #include "RCWorldSettings.h"
+#include "Blocks/RCBlock.h"
 #include "PerlinNoise/RCPerlinNoise.h"
 
 #pragma optimize("", off)
@@ -17,7 +18,17 @@ void ARCWorldManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	WorldSettings->Seed = FMath::RandRange(1, INT_MAX);;
+	WorldSettings->Seed = FMath::RandRange(1, INT_MAX);
+	
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	WireframeBlock = GetWorld()->SpawnActor<ARCBlock>(
+		WireframeBlockClass, 
+		FVector(0, 0, 0), 
+		FRotator::ZeroRotator, 
+		SpawnParams
+	);
 }
 
 void ARCWorldManager::HandleChunckLoading(const FVector& PlayerCoords)
@@ -77,7 +88,7 @@ void ARCWorldManager::AddChunck(int X, int Y)
 	NewChunk->SetRender(false);
 }
 
-bool ARCWorldManager::SpawnBlock(FVector& Coords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight)
+bool ARCWorldManager::SpawnBlock(const FVector& Coords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight)
 {
 	FVector2D ChunkCoords = GetChunkCoords(Coords);
 
@@ -90,6 +101,21 @@ bool ARCWorldManager::SpawnBlock(FVector& Coords, const FVector& PlayerGridCoord
 
 	return FoundChunk->SpawnBlock(EBlockType::Dirt, Coords, PlayerGridCoords, ColliderSize, ColliderHeight);
 }
+
+void ARCWorldManager::DisplayWireframe(const FVector& GridCoords, const FVector& LookAtBlockNormal, bool bIsLookingAtChunk)
+{
+	if (!bIsLookingAtChunk)
+	{
+		WireframeBlock->ToggleVisibility(false);
+		return;
+	}
+
+	WireframeBlock->ToggleVisibility(true);
+	
+	const FVector WorldCoords = ((GridCoords + LookAtBlockNormal) * WorldSettings->BlockSize) + WorldSettings->GetHalfBlockSize();
+	WireframeBlock->SetActorLocation(WorldCoords);
+}
+
 
 FVector2D ARCWorldManager::GetChunkCoords(const FVector& WorldCoords)
 {

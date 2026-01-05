@@ -13,7 +13,7 @@
 #include "RatCraft/World/RCWorldChunck.h"
 #include "RatCraft/World/RCWorldManager.h"
 #include "RatCraft/World/RCWorldSettings.h"
-#include "RatCraft/World/Blocks/RCBlock.h"
+#include "RatCraft/World/Blocks/RCBlockStatics.h"
 
 #pragma optimize("", off)
 
@@ -85,6 +85,7 @@ void ARCPlayerCharacter::Tick(float DeltaSeconds)
 	if (MovementComp->Velocity != FVector::ZeroVector)
 	{
 		PlayerGridCoords = GetActorLocation() / WorldSettings->BlockSize;
+		UpdateWireframe();
 	}
 }
 
@@ -135,6 +136,8 @@ void ARCPlayerCharacter::HandleLookInput(const struct FInputActionValue& InputAc
 
 	AddControllerPitchInput(-InputVal.Y);
 	AddControllerYawInput(InputVal.X);
+
+	UpdateWireframe();
 }
 
 void ARCPlayerCharacter::HandleMineInput(const struct FInputActionValue& InputActionValue)
@@ -181,6 +184,9 @@ void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputA
 			BlockPlacedCooldown,
 			false
 		);
+
+		FindInteractableChunck();
+		UpdateWireframe();
 	}
 }
 
@@ -190,6 +196,14 @@ void ARCPlayerCharacter::LookAtChunckChanged(class ARCWorldChunck* NewChunck)
 		CurrentlyLookAtChunck->EndInteract();
 	
 	CurrentlyLookAtChunck = NewChunck;
+}
+
+void ARCPlayerCharacter::UpdateWireframe()
+{
+	if (!WorldManager)
+		return;
+	
+	WorldManager->DisplayWireframe(LookAtBlockCoords, LookAtBlockNormal, bIsLookingAtChunk);
 }
 
 class ARCWorldChunck* ARCPlayerCharacter::FindInteractableChunck()
@@ -204,9 +218,10 @@ class ARCWorldChunck* ARCPlayerCharacter::FindInteractableChunck()
 	
 	if (ARCWorldChunck* InteractedChunck = Cast<ARCWorldChunck>(HitResult.GetActor()))
 	{
-		LookAtBlockNormal = HitResult.ImpactNormal;
+		bIsLookingAtChunk = true;
 		
-		LookAtBlockCoords = HitResult.Location / URCWorldSettings::GetSettings()->BlockSize -
+		LookAtBlockNormal = HitResult.ImpactNormal;
+		LookAtBlockCoords = HitResult.Location / WorldSettings->BlockSize -
 			FVector(
 			FMath::Clamp(LookAtBlockNormal.X, 0, 1),
 			FMath::Clamp(LookAtBlockNormal.Y, 0, 1),
@@ -223,5 +238,7 @@ class ARCWorldChunck* ARCPlayerCharacter::FindInteractableChunck()
 		
 		return InteractedChunck;
 	}
+
+	bIsLookingAtChunk = false;
 	return nullptr;
 }

@@ -4,7 +4,7 @@
 #include "RCWorldChunck.h"
 #include "ProceduralMeshComponent.h"
 #include "RCWorldSettings.h"
-#include "Blocks/RCBlock.h"
+#include "Blocks/RCBlockStatics.h"
 #include "Blocks/RCDataAssetBlock.h"
 #include "PerlinNoise/RCPerlinNoise.h"
 
@@ -202,6 +202,16 @@ bool ARCWorldChunck::CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords
 		&& NewBlockGridCoords.Z - ChunckWorldCoords.Z <= WorldSettings->ChunckHeight
 		);
 }
+
+//FVector ARCWorldChunck::DisplayWireframe(const EBlockType BlockTypeToSpawn, const FVector& GridCoords)
+//{
+//	const FVector LocalGridCoords = GetLocalGridCoords(GridCoords);
+//
+//	if (!ChunckBlocksData.Contains(LocalGridCoords))
+//		return FVector(0,0,0);
+//
+//	ChunckBlocksData.FindChecked(LocalGridCoords) = BlockTypeToSpawn;
+//}
 
 bool ARCWorldChunck::IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, float ColliderSize, float ColliderHeight) const
 {

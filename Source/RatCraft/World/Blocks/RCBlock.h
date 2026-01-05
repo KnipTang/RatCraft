@@ -3,62 +3,25 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "RatCraft/World/RCWorldSettings.h"
+#include "GameFramework/Actor.h"
 #include "RCBlock.generated.h"
 
-UENUM(BlueprintType)
-enum class EBlockType : uint8
-{
-	Grass 						UMETA(DisplayName = "Grass"),
-	Dirt						UMETA(DisplayName = "Dirt"),
-	Stone						UMETA(DisplayName = "Stone"),
-	Snow						UMETA(DisplayName = "Snow"),
-	Air							UMETA(DisplayName = "Air"),
-};
-
-USTRUCT()
-struct FBlockFaceVisibility
+UCLASS()
+class RATCRAFT_API ARCBlock : public AActor
 {
 	GENERATED_BODY()
 	
-public:
-	FBlockFaceVisibility() :
-		South(false), North(false), West(false), East(false), Top(false), Bottom(false)
-	{
-		Faces = {South, North, West, East, Top, Bottom};
-	}
-	FBlockFaceVisibility(bool InSouth, bool InNorth, bool InWest, bool InEast, bool InTop, bool InBottom) :
-		South(InSouth), North(InNorth), West(InWest), East(InEast), Top(InTop), Bottom(InBottom)
-	{
-		Faces = {South, North, West, East, Top, Bottom};
-	}
+public:	
+	// Sets default values for this actor's properties
+	ARCBlock();
 
-	
-	bool South = false;
-	bool North = false;
-	bool West = false;
-	bool East = false;
-	bool Top = false;
-	bool Bottom = false;
+	void ToggleVisibility(const bool Visibility) const { CubeMesh->SetVisibility(Visibility); }
 
-	TArray<bool> Faces;
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+private:
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* CubeMesh;
 };
-
-static EBlockType GetBlockTypeFromHeight(const int TerrainHeight, const int BlockHeight)
-{
-	const URCWorldSettings* WorldSettings = URCWorldSettings::GetSettings();
-	int RandomOffset = FMath::RandRange(0, 2);
-	
-	if (BlockHeight > TerrainHeight)
-		return EBlockType::Air;
-	else if (BlockHeight == TerrainHeight && BlockHeight < WorldSettings->ChunckHeight - (WorldSettings->SnowLevel + RandomOffset))
-		return EBlockType::Grass;
-	else if (BlockHeight >= TerrainHeight - (WorldSettings->RockLevel - RandomOffset) && BlockHeight < WorldSettings->ChunckHeight - (WorldSettings->SnowLevel + RandomOffset))
-		return EBlockType::Dirt;
-	else if (BlockHeight <= TerrainHeight - (WorldSettings->RockLevel - RandomOffset))
-		return EBlockType::Stone;
-	else if (BlockHeight >= WorldSettings->ChunckHeight - (WorldSettings->SnowLevel + RandomOffset))
-		return EBlockType::Snow;
-	
-	return EBlockType::Air;
-}

@@ -67,12 +67,16 @@ private:
 	class ARCWorldManager* WorldManager;
 	UPROPERTY()
 	class ARCWorldChunck* CurrentlyLookAtChunck;
+	bool bIsLookingAtChunk;
+
 	
 	FVector LookAtBlockNormal;
 	FVector LookAtBlockCoords;
 	
 	void LookAtChunckChanged(class ARCWorldChunck* NewChunck);
 	class ARCWorldChunck* FindInteractableChunck();
+
+	void UpdateWireframe();
 	
 	FVector PlayerGridCoords;
 

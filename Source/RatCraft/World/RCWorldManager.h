@@ -24,11 +24,17 @@ public:
 	void RenderChunck(const FVector2D& Coords);
 	void AddChunck(int X, int Y);
 
-	bool SpawnBlock(FVector& Coords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight);
+	bool SpawnBlock(const FVector& Coords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight);
+	void DisplayWireframe(const FVector& GridCoords, const FVector& LookAtBlockNormal, bool bIsLookingAtChunk);
 
 	class ARCWorldChunck* GetChunkByChunkCoords(const FVector2D& ChunkCoords) const { return AllChunks.FindChecked(ChunkCoords); };
 private:
 	FVector2D GetChunkCoords(const FVector& WorldCoords);
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class ARCBlock> WireframeBlockClass;
+	UPROPERTY()
+	class ARCBlock* WireframeBlock;
 	
 	UPROPERTY()
 	const class URCWorldSettings* WorldSettings;
