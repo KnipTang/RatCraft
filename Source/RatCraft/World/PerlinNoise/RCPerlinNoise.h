@@ -15,5 +15,5 @@ class RATCRAFT_API URCPerlinNoise : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
-	static TArray<float> GenerateHeightMap(int32 Width, int32 Height, float Scale, FVector2D Offset);
+	static TArray<float> GenerateHeightMap(int32 Width, int32 Height, float Scale, FVector2D Offset, int Seed);
 };

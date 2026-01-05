@@ -77,9 +77,9 @@ void ARCWorldChunck::InitChunckBlockData()
 	{
 		for (int Z = -1; Z < WorldSettings->ChunckSize + 1; Z++)
 		{
-			const float NoiseHeight = GetNoiseHeightAt(X + 1, Z + 1);
+			float NoiseHeight = GetNoiseHeightAt(X + 1, Z + 1);
+			NoiseHeight = FMath::Clamp(NoiseHeight, 0.4f, 1.f);
 			int TerrainHeight = FMath::RoundToInt(NoiseHeight * WorldSettings->ChunckHeight);
-			TerrainHeight = FMath::Clamp(TerrainHeight, 0, WorldSettings->ChunckHeight);
 			for (int Y = 0; Y < WorldSettings->ChunckHeight; Y++)
 			{
 				const FVector Coords = FVector(X, Z, Y);
@@ -283,7 +283,7 @@ void ARCWorldChunck::LookAtBlockChanged()
 /***************************************************/
 TArray<float> ARCWorldChunck::GeneratePerlinNoise() const
 {
-	return URCPerlinNoise::GenerateHeightMap(WorldSettings->ChunckSize + 2, WorldSettings->ChunckSize + 2, WorldSettings->PerlinNoiseScale, FVector2D(ChunckWorldCoords.X - (1.f/WorldSettings->ChunckSize), ChunckWorldCoords.Y - (1.f/WorldSettings->ChunckSize)));
+	return URCPerlinNoise::GenerateHeightMap(WorldSettings->ChunckSize + 2, WorldSettings->ChunckSize + 2, WorldSettings->PerlinNoiseScale, FVector2D(ChunckWorldCoords.X - (1.f/WorldSettings->ChunckSize), ChunckWorldCoords.Y - (1.f/WorldSettings->ChunckSize)), WorldSettings->Seed);
 }
 
 float ARCWorldChunck::GetNoiseHeightAt(int X, int Z)

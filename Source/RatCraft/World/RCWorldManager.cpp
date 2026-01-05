@@ -16,6 +16,8 @@ ARCWorldManager::ARCWorldManager()
 void ARCWorldManager::BeginPlay()
 {
 	Super::BeginPlay();
+
+	WorldSettings->Seed = FMath::RandRange(1, INT_MAX);;
 }
 
 void ARCWorldManager::HandleChunckLoading(const FVector& PlayerCoords)

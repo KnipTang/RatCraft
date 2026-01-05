@@ -15,7 +15,7 @@ class RATCRAFT_API URCWorldSettings : public UDeveloperSettings
 
 public:
 	URCWorldSettings();
-
+	
 	float GetHalfBlockSize() const { return BlockSize / 2.f; }
 	float GetWorldChunckSize() const { return ChunckSize * BlockSize; }
 	
@@ -38,6 +38,8 @@ public:
 	
 	UPROPERTY(Config, EditDefaultsOnly)
 	int RenderDistance = 16;
+
+	mutable int Seed = 1;
 	
 	TArray<FVector> FaceNormals;
 	TArray<FVector> CubeVertices;

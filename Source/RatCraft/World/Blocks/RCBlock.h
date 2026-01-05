@@ -47,16 +47,17 @@ public:
 static EBlockType GetBlockTypeFromHeight(const int TerrainHeight, const int BlockHeight)
 {
 	const URCWorldSettings* WorldSettings = URCWorldSettings::GetSettings();
+	int RandomOffset = FMath::RandRange(0, 2);
 	
 	if (BlockHeight > TerrainHeight)
 		return EBlockType::Air;
-	else if (BlockHeight == TerrainHeight && BlockHeight < WorldSettings->ChunckHeight - WorldSettings->SnowLevel)
+	else if (BlockHeight == TerrainHeight && BlockHeight < WorldSettings->ChunckHeight - (WorldSettings->SnowLevel + RandomOffset))
 		return EBlockType::Grass;
-	else if (BlockHeight >= TerrainHeight - WorldSettings->RockLevel && BlockHeight < WorldSettings->ChunckHeight - WorldSettings->SnowLevel)
+	else if (BlockHeight >= TerrainHeight - (WorldSettings->RockLevel - RandomOffset) && BlockHeight < WorldSettings->ChunckHeight - (WorldSettings->SnowLevel + RandomOffset))
 		return EBlockType::Dirt;
-	else if (BlockHeight <= TerrainHeight - WorldSettings->RockLevel)
+	else if (BlockHeight <= TerrainHeight - (WorldSettings->RockLevel - RandomOffset))
 		return EBlockType::Stone;
-	else if (BlockHeight >= WorldSettings->ChunckHeight - WorldSettings->SnowLevel)
+	else if (BlockHeight >= WorldSettings->ChunckHeight - (WorldSettings->SnowLevel + RandomOffset))
 		return EBlockType::Snow;
 	
 	return EBlockType::Air;
