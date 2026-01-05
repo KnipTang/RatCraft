@@ -73,16 +73,11 @@ void ARCWorldChunck::SetRender(const bool Render)
 
 void ARCWorldChunck::InitChunckBlockData()
 {
-	//for (int X = -1; X < WorldSettings->ChunckSize + 1; X++)
-	//{
-	//	for (int Z = -1; Z < WorldSettings->ChunckSize + 1; Z++)
-	//	{
-	//		const float NoiseHeight = GetNoiseHeightAt(X + 1, Z + 1);
-	for (int X = 0; X < WorldSettings->ChunckSize; X++)
+	for (int X = -1; X < WorldSettings->ChunckSize + 1; X++)
 	{
-		for (int Z = 0; Z < WorldSettings->ChunckSize; Z++)
+		for (int Z = -1; Z < WorldSettings->ChunckSize + 1; Z++)
 		{
-			const float NoiseHeight = GetNoiseHeightAt(X , Z);
+			const float NoiseHeight = GetNoiseHeightAt(X + 1, Z + 1);
 			int TerrainHeight = FMath::RoundToInt(NoiseHeight * WorldSettings->ChunckHeight);
 			TerrainHeight = FMath::Clamp(TerrainHeight, 0, WorldSettings->ChunckHeight);
 			for (int Y = 0; Y < WorldSettings->ChunckHeight; Y++)
@@ -92,7 +87,6 @@ void ARCWorldChunck::InitChunckBlockData()
 			}
 		}
 	}
-	
 }
 
 void ARCWorldChunck::RenderChunck()
@@ -104,8 +98,8 @@ void ARCWorldChunck::RenderChunck()
 	{
 		if (BlockData.Value == EBlockType::Air)
 			continue;
-		//if (BlockData.Key.X == -1 || BlockData.Key.Y == -1 || BlockData.Key.X == WorldSettings->ChunckSize || BlockData.Key.Y == WorldSettings->ChunckSize)
-		//	continue;
+		if (BlockData.Key.X == -1 || BlockData.Key.Y == -1 || BlockData.Key.X == WorldSettings->ChunckSize || BlockData.Key.Y == WorldSettings->ChunckSize)
+			continue;
 
 		GenerateBlockFaces(BlockData.Key);
 	}
@@ -217,8 +211,6 @@ bool ARCWorldChunck::IsPlayerObstructing(const FVector& NewBlockGridCoords, cons
 		FMath::Abs((NewBlockGridCoords.X + 0.5f) - (PlayerGridCoords.X)) +
 		FMath::Abs((NewBlockGridCoords.Y + 0.5f) - (PlayerGridCoords.Y)) +
 		FMath::Abs((NewBlockGridCoords.Z + 0.5f) - (PlayerGridCoords.Z - ColliderHeight));
-
-	UE_LOG(LogTemp, Warning, TEXT("%f"), Distance);
 	
 	return Distance >= 1.5f;
 }
@@ -291,9 +283,7 @@ void ARCWorldChunck::LookAtBlockChanged()
 /***************************************************/
 TArray<float> ARCWorldChunck::GeneratePerlinNoise() const
 {
-	//return URCPerlinNoise::GenerateHeightMap(WorldSettings->ChunckSize + 2, WorldSettings->ChunckSize + 2, WorldSettings->PerlinNoiseScale, FVector2D(ChunckGridCoords.X - (1.f/WorldSettings->ChunckSize), ChunckGridCoords.Y - (1.f/WorldSettings->ChunckSize)));
-	return URCPerlinNoise::GenerateHeightMap(WorldSettings->ChunckSize, WorldSettings->ChunckSize, WorldSettings->PerlinNoiseScale, FVector2D(ChunckWorldCoords.X, ChunckWorldCoords.Y));
-
+	return URCPerlinNoise::GenerateHeightMap(WorldSettings->ChunckSize + 2, WorldSettings->ChunckSize + 2, WorldSettings->PerlinNoiseScale, FVector2D(ChunckWorldCoords.X - (1.f/WorldSettings->ChunckSize), ChunckWorldCoords.Y - (1.f/WorldSettings->ChunckSize)));
 }
 
 float ARCWorldChunck::GetNoiseHeightAt(int X, int Z)
@@ -301,8 +291,7 @@ float ARCWorldChunck::GetNoiseHeightAt(int X, int Z)
 	if (PerlinNoise.Num() == 0)
 		return 0.0f;
 	
-	//const int NoiseIndex = X + Z * (WorldSettings->ChunckSize + 2);
-	const int NoiseIndex = X + Z * (WorldSettings->ChunckSize);
+	const int NoiseIndex = X + Z * (WorldSettings->ChunckSize + 2);
 	
 	if (NoiseIndex >= 0 && NoiseIndex < PerlinNoise.Num())
 	{

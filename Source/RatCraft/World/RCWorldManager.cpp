@@ -4,6 +4,7 @@
 #include "RCWorldManager.h"
 #include "RCWorldChunck.h"
 #include "RCWorldSettings.h"
+#include "PerlinNoise/RCPerlinNoise.h"
 
 #pragma optimize("", off)
 

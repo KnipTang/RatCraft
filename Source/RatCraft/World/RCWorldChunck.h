@@ -44,6 +44,8 @@ public:
 
 	const FVector& GetChunckWorldCoords() const {return ChunckWorldCoords;}
 	const FVector2D& GetChunckGridCoords() const {return ChunckGridCoords;}
+
+	TArray<float> GetPerlinNoise() const { return PerlinNoise; }
 protected:
 	virtual void BeginPlay() override;
 

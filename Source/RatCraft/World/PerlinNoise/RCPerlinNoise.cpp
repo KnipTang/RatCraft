@@ -16,9 +16,11 @@ TArray<float> URCPerlinNoise::GenerateHeightMap(int32 Width, int32 Height, float
 			const float SampleY = (y + Offset.Y) * Scale;
             
 			const float NoiseValue = FMath::PerlinNoise2D(FVector2D(SampleX, SampleY));
-			HeightMap[x + y * Width] = NoiseValue;
+			const float RemappedValue = (NoiseValue + 1.0f) * 0.5f;
+			
+			HeightMap[x + y * Width] = RemappedValue;
 		}
 	}
-    
+	
 	return HeightMap;
 }
