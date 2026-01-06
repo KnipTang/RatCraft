@@ -40,9 +40,6 @@ public:
 	bool IsMining() const { return bIsMining; }
 	
 	bool SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight);
-	bool CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight) const;
-
-	//FVector DisplayWireframe(const EBlockType BlockTypeToSpawn, const FVector& GridCoords);
 	
 	const FVector& GetChunckWorldCoords() const {return ChunckWorldCoords;}
 	const FVector2D& GetChunckGridCoords() const {return ChunckGridCoords;}
@@ -60,10 +57,7 @@ private:
 	void GenerateBlockFaces(const FVector& Coords);
 
 	void UpdateChunckMesh();
-
-	//PLACEMENT
-	bool IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, float ColliderSize, float ColliderHeight) const;
-
+	
 	//MINING
 	void StartMining();
 	void StopMining();

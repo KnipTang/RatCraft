@@ -90,6 +90,9 @@ void ARCWorldManager::AddChunck(int X, int Y)
 
 bool ARCWorldManager::SpawnBlock(const FVector& Coords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight)
 {
+	if (!CanSpawnBlockAtGridCoords(Coords, PlayerGridCoords, ColliderSize, ColliderHeight))
+		return false;
+	
 	FVector2D ChunkCoords = GetChunkCoords(Coords);
 
 	if (!AllChunks.Contains(ChunkCoords))
@@ -116,6 +119,28 @@ void ARCWorldManager::DisplayWireframe(const FVector& GridCoords, const FVector&
 	WireframeBlock->SetActorLocation(WorldCoords);
 }
 
+bool ARCWorldManager::CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight) const
+{
+	return (
+		IsPlayerObstructing(NewBlockGridCoords, PlayerGridCoords, ColliderSize, ColliderHeight)
+		&& NewBlockGridCoords.Z <= WorldSettings->ChunckHeight
+		);
+}
+
+bool ARCWorldManager::IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, float ColliderSize, float ColliderHeight) const
+{
+	ColliderSize = ColliderSize / WorldSettings->BlockSize;
+	ColliderHeight = ColliderHeight / WorldSettings->BlockSize;
+	
+	const float Distance = FMath::Sqrt(
+		FMath::Square((NewBlockGridCoords.X + 0.5f) - PlayerGridCoords.X) +
+		FMath::Square((NewBlockGridCoords.Y + 0.5f) - PlayerGridCoords.Y)
+	);
+
+	const float DistanceHeight = FMath::Abs((NewBlockGridCoords.Z + 0.5f) - (FMath::FloorToInt(PlayerGridCoords.Z)));
+	
+	return Distance >= 0.5f + ColliderSize || DistanceHeight >= 0.5f + ColliderHeight;
+}
 
 FVector2D ARCWorldManager::GetChunkCoords(const FVector& WorldCoords)
 {

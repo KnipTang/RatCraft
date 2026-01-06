@@ -29,9 +29,16 @@ private:
 	UPROPERTY()
 	UCharacterMovementComponent* MovementComp;
 
+private:
 	UPROPERTY()
 	const class URCWorldSettings* WorldSettings;
 	
+	UPROPERTY()
+	class ARCWorldManager* WorldManager;
+
+	void SetPlayerGridCoords();
+	FVector PlayerGridCoords;
+
 	/***************************************************/
 	/*						INPUT						/
 	/***************************************************/
@@ -63,22 +70,17 @@ private:
 	float InteractDistance = 500.f;
 	
 private:
-	UPROPERTY()
-	class ARCWorldManager* WorldManager;
+	/***************************************************/
+	/*					Interacting						/
+	/***************************************************/
+	void LookAtChunckChanged(class ARCWorldChunck* NewChunck);
+	class ARCWorldChunck* UpdateInteractableChunck();
+	
 	UPROPERTY()
 	class ARCWorldChunck* CurrentlyLookAtChunck;
 	bool bIsLookingAtChunk;
-
-	
 	FVector LookAtBlockNormal;
 	FVector LookAtBlockCoords;
-	
-	void LookAtChunckChanged(class ARCWorldChunck* NewChunck);
-	class ARCWorldChunck* FindInteractableChunck();
-
-	void UpdateWireframe();
-	
-	FVector PlayerGridCoords;
 
 	//Place block
 	bool bCanPlaceBlock = true;
@@ -90,4 +92,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "World Management")
 	float UpdateWorldRenderCooldown = 1.f;
 	FTimerHandle UpdateWorldRenderTimerHandle;
+
+	void OnPlayerMovement();
+	void UpdateWireframe();
 };

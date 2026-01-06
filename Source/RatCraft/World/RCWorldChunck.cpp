@@ -182,9 +182,6 @@ bool ARCWorldChunck::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector
 {
 	const FVector LocalGridCoords = GetLocalGridCoords(GridCoords);
 
-	if (!CanSpawnBlockAtGridCoords(GridCoords, PlayerGridCoords, ColliderSize, ColliderHeight))
-		return false;
-
 	if (!ChunckBlocksData.Contains(LocalGridCoords))
 		return false;
 
@@ -193,36 +190,6 @@ bool ARCWorldChunck::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector
 	UpdateChunckMesh();
 	
 	return true;
-}
-
-bool ARCWorldChunck::CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight) const
-{
-	return (
-		IsPlayerObstructing(NewBlockGridCoords, PlayerGridCoords, ColliderSize, ColliderHeight)
-		&& NewBlockGridCoords.Z - ChunckWorldCoords.Z <= WorldSettings->ChunckHeight
-		);
-}
-
-//FVector ARCWorldChunck::DisplayWireframe(const EBlockType BlockTypeToSpawn, const FVector& GridCoords)
-//{
-//	const FVector LocalGridCoords = GetLocalGridCoords(GridCoords);
-//
-//	if (!ChunckBlocksData.Contains(LocalGridCoords))
-//		return FVector(0,0,0);
-//
-//	ChunckBlocksData.FindChecked(LocalGridCoords) = BlockTypeToSpawn;
-//}
-
-bool ARCWorldChunck::IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, float ColliderSize, float ColliderHeight) const
-{
-	ColliderHeight = ColliderHeight / WorldSettings->BlockSize;
-	
-	const float Distance = 
-		FMath::Abs((NewBlockGridCoords.X + 0.5f) - (PlayerGridCoords.X)) +
-		FMath::Abs((NewBlockGridCoords.Y + 0.5f) - (PlayerGridCoords.Y)) +
-		FMath::Abs((NewBlockGridCoords.Z + 0.5f) - (PlayerGridCoords.Z - ColliderHeight));
-	
-	return Distance >= 1.5f;
 }
 
 void ARCWorldChunck::StartMining()

@@ -2,7 +2,6 @@
 
 
 #include "RCPlayerCharacter.h"
-
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Camera/CameraComponent.h"
@@ -13,7 +12,6 @@
 #include "RatCraft/World/RCWorldChunck.h"
 #include "RatCraft/World/RCWorldManager.h"
 #include "RatCraft/World/RCWorldSettings.h"
-#include "RatCraft/World/Blocks/RCBlockStatics.h"
 
 #pragma optimize("", off)
 
@@ -39,7 +37,6 @@ ARCPlayerCharacter::ARCPlayerCharacter()
 	MovementComp = GetCharacterMovement();
 	if (!MovementComp)
 		return;
-	
 	MovementComp->bOrientRotationToMovement = false;
 	MovementComp->bUseControllerDesiredRotation = false;
 	MovementComp->RotationRate = FRotator( 0.0f,720.0f,0.0f );
@@ -50,11 +47,11 @@ void ARCPlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	WorldSettings = URCWorldSettings::GetSettings();
-	PlayerGridCoords = GetActorLocation() / WorldSettings->BlockSize;
+	SetPlayerGridCoords();
 
 	if (AGameModeBase* GameMode = GetWorld()->GetAuthGameMode())
 	{
-		if (ARCGameModeBase* RCGameModeBase = Cast<ARCGameModeBase>(GameMode))
+		if (const ARCGameModeBase* RCGameModeBase = Cast<ARCGameModeBase>(GameMode))
 		{
 			WorldManager = RCGameModeBase->GetWorldManager();
 		}
@@ -76,16 +73,12 @@ void ARCPlayerCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (ARCWorldChunck* LookAtChunck = FindInteractableChunck(); LookAtChunck != CurrentlyLookAtChunck)
-	{
-		LookAtChunckChanged(LookAtChunck);
-	}
+	UpdateInteractableChunck();
 
 	//Player is moving
 	if (MovementComp->Velocity != FVector::ZeroVector)
 	{
-		PlayerGridCoords = GetActorLocation() / WorldSettings->BlockSize;
-		UpdateWireframe();
+		OnPlayerMovement();
 	}
 }
 
@@ -93,7 +86,7 @@ void ARCPlayerCharacter::PawnClientRestart()
 {
 	Super::PawnClientRestart();
 
-	if (APlayerController* OwningPlayerController = GetController<APlayerController>())
+	if (const APlayerController* OwningPlayerController = GetController<APlayerController>())
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* InputSubsystem = OwningPlayerController->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
 		{
@@ -103,7 +96,7 @@ void ARCPlayerCharacter::PawnClientRestart()
 	}
 }
 
-void ARCPlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
+void ARCPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
@@ -117,7 +110,7 @@ void ARCPlayerCharacter::SetupPlayerInputComponent(class UInputComponent* Player
 	}
 }
 
-void ARCPlayerCharacter::HandleMoveInput(const struct FInputActionValue& InputActionValue)
+void ARCPlayerCharacter::HandleMoveInput(const FInputActionValue& InputActionValue)
 {
 	if (!Controller)
 		return;
@@ -130,7 +123,7 @@ void ARCPlayerCharacter::HandleMoveInput(const struct FInputActionValue& InputAc
 	AddMovementInput(MoveForwardDir * InputVal.Y + LookRightDir * InputVal.X);
 }
 
-void ARCPlayerCharacter::HandleLookInput(const struct FInputActionValue& InputActionValue)
+void ARCPlayerCharacter::HandleLookInput(const FInputActionValue& InputActionValue)
 {
 	const FVector2D InputVal = InputActionValue.Get<FVector2D>();
 
@@ -140,13 +133,12 @@ void ARCPlayerCharacter::HandleLookInput(const struct FInputActionValue& InputAc
 	UpdateWireframe();
 }
 
-void ARCPlayerCharacter::HandleMineInput(const struct FInputActionValue& InputActionValue)
+void ARCPlayerCharacter::HandleMineInput(const FInputActionValue& InputActionValue)
 {
 	if (!CurrentlyLookAtChunck)
 		return;
-
-	const bool bPressed = InputActionValue.Get<bool>();
-	if (bPressed)
+	
+	if (InputActionValue.Get<bool>())
 	{
 		if (!CurrentlyLookAtChunck->IsMining())
 			CurrentlyLookAtChunck->OnInteract();
@@ -155,16 +147,16 @@ void ARCPlayerCharacter::HandleMineInput(const struct FInputActionValue& InputAc
 	{
 		CurrentlyLookAtChunck->EndInteract();
 	}
+	
+	UpdateWireframe();
 }
 
-void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputActionValue)
+void ARCPlayerCharacter::HandlePlaceInput(const FInputActionValue& InputActionValue)
 {
-	const bool bPressed = InputActionValue.Get<bool>();
-	
 	if (!bCanPlaceBlock || !CurrentlyLookAtChunck || !WorldManager)
 		return;
 	
-	if (bPressed)
+	if (InputActionValue.Get<bool>())
 	{
 		FVector GridCoordsNewBlock = LookAtBlockCoords + LookAtBlockNormal;
 		
@@ -185,7 +177,7 @@ void ARCPlayerCharacter::HandlePlaceInput(const struct FInputActionValue& InputA
 			false
 		);
 
-		FindInteractableChunck();
+		UpdateInteractableChunck();
 		UpdateWireframe();
 	}
 }
@@ -198,6 +190,18 @@ void ARCPlayerCharacter::LookAtChunckChanged(class ARCWorldChunck* NewChunck)
 	CurrentlyLookAtChunck = NewChunck;
 }
 
+void ARCPlayerCharacter::OnPlayerMovement()
+{
+	SetPlayerGridCoords();
+	UpdateWireframe();
+}
+
+void ARCPlayerCharacter::SetPlayerGridCoords()
+{
+	PlayerGridCoords = GetActorLocation() / WorldSettings->BlockSize;
+}
+
+
 void ARCPlayerCharacter::UpdateWireframe()
 {
 	if (!WorldManager)
@@ -206,7 +210,7 @@ void ARCPlayerCharacter::UpdateWireframe()
 	WorldManager->DisplayWireframe(LookAtBlockCoords, LookAtBlockNormal, bIsLookingAtChunk);
 }
 
-class ARCWorldChunck* ARCPlayerCharacter::FindInteractableChunck()
+class ARCWorldChunck* ARCPlayerCharacter::UpdateInteractableChunck()
 {
 	const FHitResult HitResult = URCAbilitySystemStatics::GetHitscanTarget(
 		GetWorld(),
@@ -235,6 +239,11 @@ class ARCWorldChunck* ARCPlayerCharacter::FindInteractableChunck()
 		);
 		
 		InteractedChunck->SetCurrentlyLookAtBlock(LookAtBlockCoords);
+
+		if (InteractedChunck != CurrentlyLookAtChunck)
+		{
+			LookAtChunckChanged(InteractedChunck);
+		}
 		
 		return InteractedChunck;
 	}
