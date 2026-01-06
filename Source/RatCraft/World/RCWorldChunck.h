@@ -55,8 +55,6 @@ private:
 	
 	void RenderChunck();
 	void GenerateBlockFaces(const FVector& Coords);
-
-	void UpdateChunckMesh();
 	
 	//MINING
 	void StartMining();
@@ -82,7 +80,9 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	class UProceduralMeshComponent* ProceduralMesh;
 
-	
+	TArray<TArray<int32>> Faces;
+	TArray<FVector> FaceNormals;
+	TArray<FVector> CubeVertices;
 	
 	bool bIsRendered;
 
@@ -93,8 +93,7 @@ private:
 	TArray<FChunckMesh> ChunckMeshes;
 
 	FVector LookAtBlockCoords;
-
-	TArray<TArray<int32>> Faces;
+	
 	TArray<float> PerlinNoise;
 
 	FVector ChunckWorldCoords;

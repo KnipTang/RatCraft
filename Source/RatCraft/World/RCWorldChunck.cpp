@@ -19,6 +19,11 @@ ARCWorldChunck::ARCWorldChunck()
 	ProceduralMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("ProceduralMesh"));
 	ProceduralMesh->SetCollisionResponseToAllChannels(ECR_Block);
 	RootComponent = ProceduralMesh;
+}
+
+void ARCWorldChunck::BeginPlay()
+{
+	Super::BeginPlay();
 
 	WorldSettings = URCWorldSettings::GetSettings();
 
@@ -30,11 +35,26 @@ ARCWorldChunck::ARCWorldChunck()
 		{7, 6, 2, 3}, // Top
 		{0, 1, 5, 4}  // Bottom
 	};
-}
 
-void ARCWorldChunck::BeginPlay()
-{
-	Super::BeginPlay();
+	FaceNormals = {
+		FVector(0, -1, 0),  // South
+		FVector(0, 1, 0),   // North
+		FVector(-1, 0, 0),  // West
+		FVector(1, 0, 0),   // East
+		FVector(0, 0, 1),   // Top
+		FVector(0, 0, -1)   // Bottom
+	};
+
+	CubeVertices = {
+		FVector(-WorldSettings->GetHalfBlockSize(), -WorldSettings->GetHalfBlockSize(), -WorldSettings->GetHalfBlockSize()), // Front-bottom-left
+		FVector(WorldSettings->GetHalfBlockSize(), -WorldSettings->GetHalfBlockSize(), -WorldSettings->GetHalfBlockSize()),  // Front-bottom-right
+		FVector(WorldSettings->GetHalfBlockSize(), -WorldSettings->GetHalfBlockSize(), WorldSettings->GetHalfBlockSize()),   // Front-top-right
+		FVector(-WorldSettings->GetHalfBlockSize(), -WorldSettings->GetHalfBlockSize(), WorldSettings->GetHalfBlockSize()),  // Front-top-left
+		FVector(-WorldSettings->GetHalfBlockSize(), WorldSettings->GetHalfBlockSize(), -WorldSettings->GetHalfBlockSize()),  // Back-bottom-left
+		FVector(WorldSettings->GetHalfBlockSize(), WorldSettings->GetHalfBlockSize(), -WorldSettings->GetHalfBlockSize()),   // Back-bottom-right
+		FVector(WorldSettings->GetHalfBlockSize(), WorldSettings->GetHalfBlockSize(), WorldSettings->GetHalfBlockSize()),    // Back-top-right
+		FVector(-WorldSettings->GetHalfBlockSize(), WorldSettings->GetHalfBlockSize(), WorldSettings->GetHalfBlockSize())    // Back-top-left
+	};
 
 	ChunckWorldCoords = GetActorLocation() / WorldSettings->BlockSize;
 	ChunckGridCoords = FVector2D( ChunckWorldCoords / WorldSettings->ChunckSize);
@@ -141,7 +161,7 @@ void ARCWorldChunck::GenerateBlockFaces(const FVector& Coords)
 
 		for (int32 i = 0; i < 4; i++)
 		{
-			Vertices.Add(WorldSettings->CubeVertices[Face[i]] + (Coords * WorldSettings->BlockSize) + WorldSettings->GetHalfBlockSize());
+			Vertices.Add(CubeVertices[Face[i]] + (Coords * WorldSettings->BlockSize) + WorldSettings->GetHalfBlockSize());
         	
 			if (i == 0) UVs.Add(FVector2D(0, 1));
 			else if (i == 1) UVs.Add(FVector2D(1, 1));
@@ -149,7 +169,7 @@ void ARCWorldChunck::GenerateBlockFaces(const FVector& Coords)
 			else UVs.Add(FVector2D(0, 0));
         	
 			VertexColors.Emplace(255, 255, 255, FaceIndex);
-			Normals.Add(WorldSettings->FaceNormals[FaceIndex]);
+			Normals.Add(FaceNormals[FaceIndex]);
 		}
     	
 		Triangles.Add(BaseIndex);
@@ -160,11 +180,6 @@ void ARCWorldChunck::GenerateBlockFaces(const FVector& Coords)
 		Triangles.Add(BaseIndex + 2);
 		Triangles.Add(BaseIndex + 3);
 	}
-}
-
-void ARCWorldChunck::UpdateChunckMesh()
-{
-	RenderChunck();
 }
 
 void ARCWorldChunck::SetCurrentlyLookAtBlock(const FVector& Coords)
@@ -187,7 +202,7 @@ bool ARCWorldChunck::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector
 
 	ChunckBlocksData.FindChecked(LocalGridCoords) = BlockTypeToSpawn;
 	
-	UpdateChunckMesh();
+	RenderChunck();
 	
 	return true;
 }
@@ -232,7 +247,7 @@ void ARCWorldChunck::OnBlockMined()
 {
 	ChunckBlocksData[LookAtBlockCoords] = EBlockType::Air;
 	StopMining();
-	UpdateChunckMesh();
+	RenderChunck();
 }
 
 void ARCWorldChunck::UpdateMiningProgress()

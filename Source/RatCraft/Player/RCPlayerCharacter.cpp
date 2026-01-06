@@ -57,23 +57,17 @@ void ARCPlayerCharacter::BeginPlay()
 		}
 	}
 
-	if (UWorld* World = GetWorld())
-		World->GetTimerManager().SetTimer(
-		UpdateWorldRenderTimerHandle,
-		[this]()
-		 {
-			WorldManager->HandleChunckLoading(PlayerGridCoords);
-		 },
-		UpdateWorldRenderCooldown,
-		true
-	);
+	if (WorldManager)
+	{
+		WorldManager->EnableChunkLoading(&PlayerGridCoords);
+	}
 }
 
 void ARCPlayerCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	UpdateInteractableChunck();
+	WorldManager->UpdateInteractableChunck(InteractDistance, ViewCam->GetComponentLocation(), ViewCam->GetComponentRotation());
 
 	//Player is moving
 	if (MovementComp->Velocity != FVector::ZeroVector)
@@ -135,59 +129,24 @@ void ARCPlayerCharacter::HandleLookInput(const FInputActionValue& InputActionVal
 
 void ARCPlayerCharacter::HandleMineInput(const FInputActionValue& InputActionValue)
 {
-	if (!CurrentlyLookAtChunck)
+	if (!WorldManager)
 		return;
 	
-	if (InputActionValue.Get<bool>())
-	{
-		if (!CurrentlyLookAtChunck->IsMining())
-			CurrentlyLookAtChunck->OnInteract();
-	}
-	else //Released
-	{
-		CurrentlyLookAtChunck->EndInteract();
-	}
-	
-	UpdateWireframe();
+	WorldManager->Mining(InputActionValue.Get<bool>());
 }
 
 void ARCPlayerCharacter::HandlePlaceInput(const FInputActionValue& InputActionValue)
 {
-	if (!bCanPlaceBlock || !CurrentlyLookAtChunck || !WorldManager)
+	if (!WorldManager)
 		return;
 	
 	if (InputActionValue.Get<bool>())
 	{
-		FVector GridCoordsNewBlock = LookAtBlockCoords + LookAtBlockNormal;
-		
-		bool bSucceeded = WorldManager->SpawnBlock(GridCoordsNewBlock, PlayerGridCoords, GetCapsuleComponent()->GetScaledCapsuleRadius(), GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
-		if (!bSucceeded)
-			return;
-	
-		bCanPlaceBlock = false;
-	
-		if (UWorld* World = GetWorld())
-			World->GetTimerManager().SetTimer(
-			BlockPlacedTimerHandle,
-			[this]()
-			 {
-				 bCanPlaceBlock = true;
-			 },
-			BlockPlacedCooldown,
-			false
-		);
+		bool bSucceeded = WorldManager->SpawnBlock(PlayerGridCoords, GetCapsuleComponent()->GetScaledCapsuleRadius(), GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 
-		UpdateInteractableChunck();
-		UpdateWireframe();
+		if (bSucceeded)
+			WorldManager->UpdateInteractableChunck(InteractDistance, ViewCam->GetComponentLocation(), ViewCam->GetComponentRotation());
 	}
-}
-
-void ARCPlayerCharacter::LookAtChunckChanged(class ARCWorldChunck* NewChunck)
-{
-	if (CurrentlyLookAtChunck)
-		CurrentlyLookAtChunck->EndInteract();
-	
-	CurrentlyLookAtChunck = NewChunck;
 }
 
 void ARCPlayerCharacter::OnPlayerMovement()
@@ -201,53 +160,10 @@ void ARCPlayerCharacter::SetPlayerGridCoords()
 	PlayerGridCoords = GetActorLocation() / WorldSettings->BlockSize;
 }
 
-
-void ARCPlayerCharacter::UpdateWireframe()
+void ARCPlayerCharacter::UpdateWireframe() const
 {
 	if (!WorldManager)
 		return;
 	
-	WorldManager->DisplayWireframe(LookAtBlockCoords, LookAtBlockNormal, bIsLookingAtChunk);
-}
-
-class ARCWorldChunck* ARCPlayerCharacter::UpdateInteractableChunck()
-{
-	const FHitResult HitResult = URCAbilitySystemStatics::GetHitscanTarget(
-		GetWorld(),
-		ViewCam->GetComponentLocation(),
-		ViewCam->GetComponentRotation(),
-		ECC_WorldStatic,
-		InteractDistance
-		);
-	
-	if (ARCWorldChunck* InteractedChunck = Cast<ARCWorldChunck>(HitResult.GetActor()))
-	{
-		bIsLookingAtChunk = true;
-		
-		LookAtBlockNormal = HitResult.ImpactNormal;
-		LookAtBlockCoords = HitResult.Location / WorldSettings->BlockSize -
-			FVector(
-			FMath::Clamp(LookAtBlockNormal.X, 0, 1),
-			FMath::Clamp(LookAtBlockNormal.Y, 0, 1),
-			FMath::Clamp(LookAtBlockNormal.Z, 0, 1));
-		
-		constexpr float SnapEpsilon = 0.0001f;
-		LookAtBlockCoords = FVector(
-			FMath::Floor(LookAtBlockCoords.X + SnapEpsilon),
-			FMath::Floor(LookAtBlockCoords.Y + SnapEpsilon),
-			FMath::Floor(LookAtBlockCoords.Z + SnapEpsilon)
-		);
-		
-		InteractedChunck->SetCurrentlyLookAtBlock(LookAtBlockCoords);
-
-		if (InteractedChunck != CurrentlyLookAtChunck)
-		{
-			LookAtChunckChanged(InteractedChunck);
-		}
-		
-		return InteractedChunck;
-	}
-
-	bIsLookingAtChunk = false;
-	return nullptr;
+	WorldManager->UpdateWireframe();
 }

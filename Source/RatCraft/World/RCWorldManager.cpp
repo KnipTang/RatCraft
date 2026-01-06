@@ -6,18 +6,20 @@
 #include "RCWorldSettings.h"
 #include "Blocks/RCBlock.h"
 #include "PerlinNoise/RCPerlinNoise.h"
+#include "RatCraft/Abilities/RCAbilitySystemStatics.h"
 
 #pragma optimize("", off)
 
 ARCWorldManager::ARCWorldManager()
 {
-	WorldSettings = URCWorldSettings::GetSettings();
+
 }
 
 void ARCWorldManager::BeginPlay()
 {
 	Super::BeginPlay();
 
+	WorldSettings = URCWorldSettings::GetSettings();
 	WorldSettings->Seed = FMath::RandRange(1, INT_MAX);
 	
 	FActorSpawnParameters SpawnParams;
@@ -31,15 +33,34 @@ void ARCWorldManager::BeginPlay()
 	);
 }
 
-void ARCWorldManager::HandleChunckLoading(const FVector& PlayerCoords)
+void ARCWorldManager::EnableChunkLoading(const FVector* PlayerGridCoords)
 {
-	for (class ARCWorldChunck* Chunck : RenderedChunks)
+	if (!PlayerGridCoords)
+		return;
+	
+	if (UWorld* World = GetWorld())
+		World->GetTimerManager().SetTimer(
+		UpdateWorldRenderTimerHandle,
+		[this, PlayerGridCoords]()
+		 {
+			if (!PlayerGridCoords)
+				return;
+			HandleChunckLoading(PlayerGridCoords);
+		 },
+		UpdateWorldRenderCooldown,
+		true
+	);
+}
+
+void ARCWorldManager::HandleChunckLoading(const FVector* PlayerGridCoords)
+{
+	for (ARCWorldChunck* Chunck : RenderedChunks)
 	{
 		Chunck->SetRender(false);
 	}
 
 	RenderedChunks.Empty();
-	const FVector2D ChunkCoords = GetChunkCoords(PlayerCoords);
+	const FVector2D ChunkCoords = GetChunkCoords(*PlayerGridCoords);
 
 	int ChunkDistance = WorldSettings->RenderDistance / WorldSettings->ChunckSize;
 	ChunkDistance++;
@@ -88,8 +109,30 @@ void ARCWorldManager::AddChunck(int X, int Y)
 	NewChunk->SetRender(false);
 }
 
-bool ARCWorldManager::SpawnBlock(const FVector& Coords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight)
+void ARCWorldManager::Mining(const bool bIsPressed)
 {
+	if (!bIsLookingAtChunk)
+		return;
+	
+	if (bIsPressed)
+	{
+		if (!CurrentlyLookAtChunck->IsMining())
+			CurrentlyLookAtChunck->OnInteract();
+	}
+	else //Released
+	{
+		CurrentlyLookAtChunck->EndInteract();
+	}
+	
+	UpdateWireframe();
+}
+
+bool ARCWorldManager::SpawnBlock(const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight)
+{
+	if (!bCanPlaceBlock)
+		return false;
+	
+	const FVector Coords = LookAtBlockCoords + LookAtBlockNormal;
 	if (!CanSpawnBlockAtGridCoords(Coords, PlayerGridCoords, ColliderSize, ColliderHeight))
 		return false;
 	
@@ -102,10 +145,17 @@ bool ARCWorldManager::SpawnBlock(const FVector& Coords, const FVector& PlayerGri
 	
 	ARCWorldChunck* FoundChunk = AllChunks.FindChecked(ChunkCoords);
 
-	return FoundChunk->SpawnBlock(EBlockType::Dirt, Coords, PlayerGridCoords, ColliderSize, ColliderHeight);
+	const bool bSucceeded = FoundChunk->SpawnBlock(EBlockType::Dirt, Coords, PlayerGridCoords, ColliderSize, ColliderHeight);
+
+	if (!bSucceeded)
+		return false;
+
+	StartCanPlaceBlockTimer();
+	UpdateWireframe();
+	return true;
 }
 
-void ARCWorldManager::DisplayWireframe(const FVector& GridCoords, const FVector& LookAtBlockNormal, bool bIsLookingAtChunk)
+void ARCWorldManager::UpdateWireframe() const
 {
 	if (!bIsLookingAtChunk)
 	{
@@ -115,8 +165,80 @@ void ARCWorldManager::DisplayWireframe(const FVector& GridCoords, const FVector&
 
 	WireframeBlock->ToggleVisibility(true);
 	
-	const FVector WorldCoords = ((GridCoords + LookAtBlockNormal) * WorldSettings->BlockSize) + WorldSettings->GetHalfBlockSize();
+	const FVector WorldCoords = (LookAtBlockCoords + LookAtBlockNormal) * WorldSettings->BlockSize + WorldSettings->GetHalfBlockSize();
 	WireframeBlock->SetActorLocation(WorldCoords);
+}
+
+void ARCWorldManager::UpdateInteractableChunck(const float InteractDistance, const FVector& ViewCamLocation, const FRotator& ViewCamRotation)
+{
+	const FHitResult HitResult = URCAbilitySystemStatics::GetHitscanTarget(
+		GetWorld(),
+		ViewCamLocation,
+		ViewCamRotation,
+		ECC_WorldStatic,
+		InteractDistance
+		);
+
+	if (!HitResult.GetActor())
+	{
+		bIsLookingAtChunk = false;
+		return;
+	}
+
+	if (HitResult.GetActor() != CurrentlyLookAtChunck)
+	{
+		if (ARCWorldChunck* InteractedChunck = Cast<ARCWorldChunck>(HitResult.GetActor()))
+		{
+			LookAtChunckChanged(InteractedChunck);
+		}
+		else
+		{
+			bIsLookingAtChunk = false;
+			return;
+		}
+	}
+	
+	bIsLookingAtChunk = true;
+	
+	LookAtBlockNormal = HitResult.ImpactNormal;
+	LookAtBlockCoords = HitResult.Location / WorldSettings->BlockSize -
+		FVector(
+		FMath::Clamp(LookAtBlockNormal.X, 0, 1),
+		FMath::Clamp(LookAtBlockNormal.Y, 0, 1),
+		FMath::Clamp(LookAtBlockNormal.Z, 0, 1));
+	
+	constexpr float SnapEpsilon = 0.0001f;
+	LookAtBlockCoords = FVector(
+		FMath::Floor(LookAtBlockCoords.X + SnapEpsilon),
+		FMath::Floor(LookAtBlockCoords.Y + SnapEpsilon),
+		FMath::Floor(LookAtBlockCoords.Z + SnapEpsilon)
+	);
+	
+	CurrentlyLookAtChunck->SetCurrentlyLookAtBlock(LookAtBlockCoords);
+}
+
+void ARCWorldManager::LookAtChunckChanged(ARCWorldChunck* NewChunck)
+{
+	if (CurrentlyLookAtChunck)
+		CurrentlyLookAtChunck->EndInteract();
+	
+	CurrentlyLookAtChunck = NewChunck;
+}
+
+void ARCWorldManager::StartCanPlaceBlockTimer()
+{
+	bCanPlaceBlock = false;
+	
+	if (UWorld* World = GetWorld())
+		World->GetTimerManager().SetTimer(
+		BlockPlacedTimerHandle,
+		[this]()
+		 {
+			 bCanPlaceBlock = true;
+		 },
+		BlockPlacedCooldown,
+		false
+	);
 }
 
 bool ARCWorldManager::CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight) const
@@ -142,16 +264,16 @@ bool ARCWorldManager::IsPlayerObstructing(const FVector& NewBlockGridCoords, con
 	return Distance >= 0.5f + ColliderSize || DistanceHeight >= 0.5f + ColliderHeight;
 }
 
-FVector2D ARCWorldManager::GetChunkCoords(const FVector& WorldCoords)
+FVector2D ARCWorldManager::GetChunkCoords(const FVector& WorldCoords) const
 {
 	int CoordsX = static_cast<int>(WorldCoords.X);
 	int CoordsY = static_cast<int>(WorldCoords.Y);
 
 	if (CoordsX < 0) CoordsX -= WorldSettings->ChunckSize - 1;
 	if (CoordsY < 0) CoordsY -= WorldSettings->ChunckSize - 1;
-	
-	int ChunkCoordsX = CoordsX / WorldSettings->ChunckSize;
-	int ChunkCoordsY = CoordsY / WorldSettings->ChunckSize;
+
+	const int ChunkCoordsX = CoordsX / WorldSettings->ChunckSize;
+	const int ChunkCoordsY = CoordsY / WorldSettings->ChunckSize;
 	
 	return FVector2D(ChunkCoordsX, ChunkCoordsY);
 }

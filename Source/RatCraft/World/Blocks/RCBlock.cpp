@@ -3,6 +3,8 @@
 
 #include "RCBlock.h"
 
+#include "RatCraft/World/RCWorldSettings.h"
+
 // Sets default values
 ARCBlock::ARCBlock()
 {
@@ -19,4 +21,7 @@ ARCBlock::ARCBlock()
 void ARCBlock::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	const float DefaultSize = CubeMesh->GetStaticMesh()->GetBounds().BoxExtent.X * 2;
+	SetActorScale3D(FVector(URCWorldSettings::GetSettings()->BlockSize / DefaultSize));
 }

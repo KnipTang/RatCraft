@@ -40,7 +40,4 @@ public:
 	int RenderDistance = 16;
 
 	mutable int Seed = 1;
-	
-	TArray<FVector> FaceNormals;
-	TArray<FVector> CubeVertices;
 };

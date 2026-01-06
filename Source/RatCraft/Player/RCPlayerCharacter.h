@@ -70,29 +70,6 @@ private:
 	float InteractDistance = 500.f;
 	
 private:
-	/***************************************************/
-	/*					Interacting						/
-	/***************************************************/
-	void LookAtChunckChanged(class ARCWorldChunck* NewChunck);
-	class ARCWorldChunck* UpdateInteractableChunck();
-	
-	UPROPERTY()
-	class ARCWorldChunck* CurrentlyLookAtChunck;
-	bool bIsLookingAtChunk;
-	FVector LookAtBlockNormal;
-	FVector LookAtBlockCoords;
-
-	//Place block
-	bool bCanPlaceBlock = true;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	float BlockPlacedCooldown = 0.1f;
-	FTimerHandle BlockPlacedTimerHandle;
-
-	UPROPERTY(EditDefaultsOnly, Category = "World Management")
-	float UpdateWorldRenderCooldown = 1.f;
-	FTimerHandle UpdateWorldRenderTimerHandle;
-
 	void OnPlayerMovement();
-	void UpdateWireframe();
+	void UpdateWireframe() const;
 };

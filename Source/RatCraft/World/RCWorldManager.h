@@ -19,20 +19,44 @@ public:
 	
 	virtual void BeginPlay() override;
 
-	void HandleChunckLoading(const FVector& PlayerCoords);
+	void EnableChunkLoading(const FVector* PlayerGridCoords);
+
+	void HandleChunckLoading(const FVector* PlayerGridCoords);
 
 	void RenderChunck(const FVector2D& Coords);
 	void AddChunck(int X, int Y);
 
-	bool SpawnBlock(const FVector& Coords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight);
-	void DisplayWireframe(const FVector& GridCoords, const FVector& LookAtBlockNormal, bool bIsLookingAtChunk);
+	void Mining(const bool bIsPressed);
+
+	bool SpawnBlock(const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight);
+	void UpdateWireframe() const;
 	
+	void UpdateInteractableChunck(const float InteractDistance, const FVector& ViewCamLocation, const FRotator& ViewCamRotation);
 	class ARCWorldChunck* GetChunkByChunkCoords(const FVector2D& ChunkCoords) const { return AllChunks.FindChecked(ChunkCoords); };
 private:
+	/***************************************************/
+	/*					Interacting						/
+	/***************************************************/
+	void LookAtChunckChanged(class ARCWorldChunck* NewChunck);
+
+	void StartCanPlaceBlockTimer();
+	
+	UPROPERTY()
+	class ARCWorldChunck* CurrentlyLookAtChunck;
+	bool bIsLookingAtChunk;
+	FVector LookAtBlockNormal;
+	FVector LookAtBlockCoords;
+
+	//BLOCK PLACEMENT
+	bool bCanPlaceBlock = true;
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	float BlockPlacedCooldown = 0.1f;
+	FTimerHandle BlockPlacedTimerHandle;
+	
 	bool CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight) const;
 	bool IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, float ColliderSize, float ColliderHeight) const;
 
-	FVector2D GetChunkCoords(const FVector& WorldCoords);
+	FVector2D GetChunkCoords(const FVector& WorldCoords) const;
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class ARCBlock> WireframeBlockClass;
@@ -48,4 +72,8 @@ private:
 	TMap<FVector2D, class ARCWorldChunck*> AllChunks;
 	UPROPERTY()
 	TArray<class ARCWorldChunck*> RenderedChunks;
+
+	UPROPERTY(EditDefaultsOnly, Category = "World Management")
+	float UpdateWorldRenderCooldown = 1.f;
+	FTimerHandle UpdateWorldRenderTimerHandle;
 };
