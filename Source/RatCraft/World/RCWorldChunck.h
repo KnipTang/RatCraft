@@ -30,23 +30,18 @@ class RATCRAFT_API ARCWorldChunck : public AActor, public IRCInteractable
 public:	
 	ARCWorldChunck();
 
+	void Init(class ARCWorldManager* InWorldManager);
+
 	virtual void OnInteract() override;
 	virtual void EndInteract() override;
 
 	void SetRender(const bool Render);
-	bool GetIsRender() const { return bIsRendered; };
 	
 	void SetCurrentlyLookAtBlock(const FVector& Coords);
 	bool IsMining() const { return bIsMining; }
 	
-	bool SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight);
-	
-	const FVector& GetChunckWorldCoords() const {return ChunckWorldCoords;}
-	const FVector2D& GetChunckGridCoords() const {return ChunckGridCoords;}
+	bool SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords);
 
-	TArray<float> GetPerlinNoise() const { return PerlinNoise; }
-
-	bool IsBlockAtCoords(const FVector& Coords) const;
 protected:
 	virtual void BeginPlay() override;
 
@@ -55,6 +50,9 @@ private:
 	
 	void RenderChunck();
 	void GenerateBlockFaces(const FVector& Coords);
+
+	bool UpdateChunckBlocksDataAtBlockCoords(const EBlockType BlockTypeToSpawn, const FVector& BlockCoords);
+	void CheckIfChunkBorderCubeGotUpdated(const EBlockType UpdatedBlockType, const FVector& Coords) const;
 	
 	//MINING
 	void StartMining();
@@ -71,23 +69,24 @@ private:
 	TArray<float> GeneratePerlinNoise() const;
 	
 	struct FBlockFaceVisibility GetBlockFaceVisibilityFromCoords(const FVector& Coords) const;
-
+	class URCDataAssetBlock* GetDataAssetBlockFromType(EBlockType BlockType) const;
 	FVector GetLocalGridCoords(const FVector& GridCoords) const;
+
+	bool IsBlockAtCoords(const FVector& Coords) const;
 private:
 	UPROPERTY()
 	const class URCWorldSettings* WorldSettings;
+
+	UPROPERTY()
+	class ARCWorldManager* WorldManager;
 	
 	UPROPERTY(VisibleAnywhere)
 	class UProceduralMeshComponent* ProceduralMesh;
 
-	TArray<TArray<int32>> Faces;
-	TArray<FVector> FaceNormals;
-	TArray<FVector> CubeVertices;
-	
-	bool bIsRendered;
-
 	UPROPERTY(EditDefaultsOnly, Category = "Blocks")
 	TMap<EBlockType, class URCDataAssetBlock*> BlockDataAsset;
+	
+	bool bIsRendered;
 	
 	TMap<FVector /*Coords*/, EBlockType> ChunckBlocksData;
 	TArray<FChunckMesh> ChunckMeshes;

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "RCWorldSettings.generated.h"
-
 /**
  * 
  */
@@ -22,22 +21,25 @@ public:
 	static const URCWorldSettings* GetSettings() { return GetDefault<URCWorldSettings>(); }
 	
 	UPROPERTY(Config, EditDefaultsOnly)
-	int ChunckSize = 16;
+	uint8 ChunckSize = 16;
 	UPROPERTY(Config, EditDefaultsOnly)
-	int ChunckHeight = 50;
+	uint8 ChunckHeight = 50;
 	UPROPERTY(Config, EditDefaultsOnly)
 	float PerlinNoiseScale = 0.1f;
 
 	UPROPERTY(Config, EditDefaultsOnly)
-	int SnowLevel = 50.f;
+	uint8 SnowLevel = 50.f;
 	UPROPERTY(Config, EditDefaultsOnly)
-	int RockLevel = 5.f;
+	uint8 RockLevel = 5.f;
 
 	UPROPERTY(Config, EditDefaultsOnly)
 	float BlockSize = 100.f;
 	
 	UPROPERTY(Config, EditDefaultsOnly)
-	int RenderDistance = 16;
+	uint8 RenderDistance = 16;
 
+	UPROPERTY(Config, EditDefaultsOnly)
+	uint8 InitChunksLoadedRange = 10;
+	
 	mutable int Seed = 1;
 };

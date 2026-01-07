@@ -16,10 +16,12 @@ class RATCRAFT_API ARCGameModeBase : public AGameModeBase
 
 public:
 	ARCGameModeBase();
-
-	virtual void BeginPlay() override;
-
+	
 	class ARCWorldManager* GetWorldManager() const { return WorldManager; }
+	
+protected:
+	virtual void BeginPlay() override;
+	
 private:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class ARCWorldManager> WorldManagerClass;

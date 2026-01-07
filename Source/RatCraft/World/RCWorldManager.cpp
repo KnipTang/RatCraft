@@ -5,14 +5,13 @@
 #include "RCWorldChunck.h"
 #include "RCWorldSettings.h"
 #include "Blocks/RCBlock.h"
-#include "PerlinNoise/RCPerlinNoise.h"
 #include "RatCraft/Abilities/RCAbilitySystemStatics.h"
 
 #pragma optimize("", off)
 
 ARCWorldManager::ARCWorldManager()
 {
-
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 void ARCWorldManager::BeginPlay()
@@ -21,6 +20,14 @@ void ARCWorldManager::BeginPlay()
 
 	WorldSettings = URCWorldSettings::GetSettings();
 	WorldSettings->Seed = FMath::RandRange(1, INT_MAX);
+	
+	for (int8 x = -WorldSettings->InitChunksLoadedRange; x < WorldSettings->InitChunksLoadedRange; x++)
+	{
+		for (int8 y = -WorldSettings->InitChunksLoadedRange; y < WorldSettings->InitChunksLoadedRange; y++)
+		{
+			AddChunck(x,y);
+		}
+	}
 	
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -60,7 +67,7 @@ void ARCWorldManager::HandleChunckLoading(const FVector* PlayerGridCoords)
 	}
 
 	RenderedChunks.Empty();
-	const FVector2D ChunkCoords = GetChunkCoords(*PlayerGridCoords);
+	const FVector2D ChunkCoords = GetChunkCoordsFromWorldCoords(PlayerGridCoords->X, PlayerGridCoords->Y);
 
 	int ChunkDistance = WorldSettings->RenderDistance / WorldSettings->ChunckSize;
 	ChunkDistance++;
@@ -105,6 +112,8 @@ void ARCWorldManager::AddChunck(int X, int Y)
 		SpawnParams
 	);
 
+	NewChunk->Init(this);
+	
 	AllChunks.Emplace(FVector2D(X, Y) ,NewChunk);
 	NewChunk->SetRender(false);
 }
@@ -136,7 +145,7 @@ bool ARCWorldManager::SpawnBlock(const FVector& PlayerGridCoords, const float Co
 	if (!CanSpawnBlockAtGridCoords(Coords, PlayerGridCoords, ColliderSize, ColliderHeight))
 		return false;
 	
-	FVector2D ChunkCoords = GetChunkCoords(Coords);
+	FVector2D ChunkCoords = GetChunkCoordsFromWorldCoords(Coords.X, Coords.Y);
 
 	if (!AllChunks.Contains(ChunkCoords))
 	{
@@ -145,7 +154,7 @@ bool ARCWorldManager::SpawnBlock(const FVector& PlayerGridCoords, const float Co
 	
 	ARCWorldChunck* FoundChunk = AllChunks.FindChecked(ChunkCoords);
 
-	const bool bSucceeded = FoundChunk->SpawnBlock(EBlockType::Dirt, Coords, PlayerGridCoords, ColliderSize, ColliderHeight);
+	const bool bSucceeded = FoundChunk->SpawnBlock(EBlockType::Dirt, Coords);
 
 	if (!bSucceeded)
 		return false;
@@ -217,6 +226,18 @@ void ARCWorldManager::UpdateInteractableChunck(const float InteractDistance, con
 	CurrentlyLookAtChunck->SetCurrentlyLookAtBlock(LookAtBlockCoords);
 }
 
+class ARCWorldChunck* ARCWorldManager::GetChunkAtWorldCoords(const int X, const int Y)
+{
+	FVector2D ChunkCoords = GetChunkCoordsFromWorldCoords(X, Y);
+	
+	if (!AllChunks.Contains(ChunkCoords))
+	{
+		return nullptr;
+	}
+
+	return AllChunks.FindChecked(ChunkCoords);
+}
+
 void ARCWorldManager::LookAtChunckChanged(ARCWorldChunck* NewChunck)
 {
 	if (CurrentlyLookAtChunck)
@@ -264,10 +285,10 @@ bool ARCWorldManager::IsPlayerObstructing(const FVector& NewBlockGridCoords, con
 	return Distance >= 0.5f + ColliderSize || DistanceHeight >= 0.5f + ColliderHeight;
 }
 
-FVector2D ARCWorldManager::GetChunkCoords(const FVector& WorldCoords) const
+FVector2D ARCWorldManager::GetChunkCoordsFromWorldCoords(const int X, const int Y) const
 {
-	int CoordsX = static_cast<int>(WorldCoords.X);
-	int CoordsY = static_cast<int>(WorldCoords.Y);
+	int CoordsX = static_cast<int>(X);
+	int CoordsY = static_cast<int>(Y);
 
 	if (CoordsX < 0) CoordsX -= WorldSettings->ChunckSize - 1;
 	if (CoordsY < 0) CoordsY -= WorldSettings->ChunckSize - 1;

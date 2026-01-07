@@ -16,13 +16,15 @@ class RATCRAFT_API ARCPlayerCharacter : public ARCCharacter
 
 public:
 	ARCPlayerCharacter();
-
-	virtual void BeginPlay() override;
+	
 	virtual void Tick(float DeltaSeconds) override;
 
 	virtual void PawnClientRestart() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+	
+protected:
+	virtual void BeginPlay() override;
+	
 private:
 	UPROPERTY(VisibleDefaultsOnly, Category = "View")
 	class UCameraComponent* ViewCam;
