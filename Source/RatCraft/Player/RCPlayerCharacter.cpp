@@ -65,7 +65,7 @@ void ARCPlayerCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	WorldManager->UpdateInteractableChunck(InteractDistance, ViewCam->GetComponentLocation(), ViewCam->GetComponentRotation());
+	WorldManager->UpdateInteractableChunk(InteractDistance, ViewCam->GetComponentLocation(), ViewCam->GetComponentRotation());
 
 	//Player is moving
 	if (MovementComp->Velocity != FVector::ZeroVector)
@@ -143,7 +143,7 @@ void ARCPlayerCharacter::HandlePlaceInput(const FInputActionValue& InputActionVa
 		bool bSucceeded = WorldManager->SpawnBlock(PlayerGridCoords, GetCapsuleComponent()->GetScaledCapsuleRadius(), GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 
 		if (bSucceeded)
-			WorldManager->UpdateInteractableChunck(InteractDistance, ViewCam->GetComponentLocation(), ViewCam->GetComponentRotation());
+			WorldManager->UpdateInteractableChunk(InteractDistance, ViewCam->GetComponentLocation(), ViewCam->GetComponentRotation());
 	}
 }
 

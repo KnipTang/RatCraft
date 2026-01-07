@@ -26,28 +26,31 @@ public:
 	
 	void UpdateWireframe() const;
 	
-	void UpdateInteractableChunck(const float InteractDistance, const FVector& ViewCamLocation, const FRotator& ViewCamRotation);
+	void UpdateInteractableChunk(const float InteractDistance, const FVector& ViewCamLocation, const FRotator& ViewCamRotation);
 
-	class ARCWorldChunck* GetChunkAtWorldCoords(const int X, const int Y);
-
+	class ARCWorldChunk* GetChunkAtWorldCoords(const int X, const int Y);
+	class URCDataAssetBlock* GetDataAssetBlockFromType(EBlockType BlockType) const;
 protected:
 	virtual void BeginPlay() override;
 	
 private:
-	void RenderChunck(const FVector2D& Coords);
-	void AddChunck(int X, int Y);
+	void RenderChunk(const FVector2D& Coords);
+	void AddChunk(int X, int Y);
 	
-	void HandleChunckLoading(const FVector* PlayerGridCoords);
+	void HandleChunkLoading(const FVector* PlayerGridCoords);
 
 	UPROPERTY()
 	const class URCWorldSettings* WorldSettings;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Blocks")
+	TMap<EBlockType, class URCDataAssetBlock*> BlockDataAsset;
 	
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<class ARCWorldChunck> ChunksClass;
+	TSubclassOf<class ARCWorldChunk> ChunksClass;
 	UPROPERTY()
-	TMap<FVector2D, class ARCWorldChunck*> AllChunks;
+	TMap<FVector2D, class ARCWorldChunk*> AllChunks;
 	UPROPERTY()
-	TArray<class ARCWorldChunck*> RenderedChunks;
+	TArray<class ARCWorldChunk*> RenderedChunks;
 
 	UPROPERTY(EditDefaultsOnly, Category = "World Management")
 	float UpdateWorldRenderCooldown = 1.f;
@@ -56,12 +59,12 @@ private:
 	/***************************************************/
 	/*					Interacting						/
 	/***************************************************/
-	void LookAtChunckChanged(class ARCWorldChunck* NewChunck);
+	void LookAtChunkChanged(class ARCWorldChunk* NewChunk);
 
 	void StartCanPlaceBlockTimer();
 	
 	UPROPERTY()
-	class ARCWorldChunck* CurrentlyLookAtChunck;
+	class ARCWorldChunk* CurrentlyLookAtChunk;
 	bool bIsLookingAtChunk;
 	FVector LookAtBlockNormal;
 	FVector LookAtBlockCoords;

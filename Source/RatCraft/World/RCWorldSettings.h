@@ -16,14 +16,14 @@ public:
 	URCWorldSettings();
 	
 	float GetHalfBlockSize() const { return BlockSize / 2.f; }
-	float GetWorldChunckSize() const { return ChunckSize * BlockSize; }
+	float GetWorldChunkSize() const { return ChunkSize * BlockSize; }
 	
 	static const URCWorldSettings* GetSettings() { return GetDefault<URCWorldSettings>(); }
 	
 	UPROPERTY(Config, EditDefaultsOnly)
-	uint8 ChunckSize = 16;
+	uint8 ChunkSize = 16;
 	UPROPERTY(Config, EditDefaultsOnly)
-	uint8 ChunckHeight = 50;
+	uint8 ChunkHeight = 50;
 	UPROPERTY(Config, EditDefaultsOnly)
 	float PerlinNoiseScale = 0.1f;
 
