@@ -11,8 +11,6 @@
 #include "RatCraft/World/RCWorldManager.h"
 #include "RatCraft/World/RCWorldSettings.h"
 
-#pragma optimize("", off)
-
 ARCPlayerCharacter::ARCPlayerCharacter()
 {
 	USkeletalMeshComponent* MeshComp = GetMesh();
@@ -49,7 +47,7 @@ void ARCPlayerCharacter::BeginPlay()
 
 	if (AGameModeBase* GameMode = GetWorld()->GetAuthGameMode())
 	{
-		if (const ARCGameModeBase* RCGameModeBase = Cast<ARCGameModeBase>(GameMode))
+		if (ARCGameModeBase* RCGameModeBase = Cast<ARCGameModeBase>(GameMode))
 		{
 			WorldManager = RCGameModeBase->GetWorldManager();
 		}

@@ -15,8 +15,6 @@ class RATCRAFT_API ARCGameModeBase : public AGameModeBase
 	GENERATED_BODY()
 
 public:
-	ARCGameModeBase();
-	
 	class ARCWorldManager* GetWorldManager() const { return WorldManager; }
 	
 protected:

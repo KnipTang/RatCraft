@@ -8,9 +8,6 @@
 #include "Blocks/RCBlockStatics.h"
 #include "Blocks/RCDataAssetBlock.h"
 #include "PerlinNoise/RCPerlinNoise.h"
-#include "RatCraft/Framework/RCGameModeBase.h"
-
-#pragma optimize("", off)
 
 // Sets default values
 ARCWorldChunk::ARCWorldChunk()
@@ -23,24 +20,25 @@ ARCWorldChunk::ARCWorldChunk()
 	RootComponent = ProceduralMesh;
 }
 
-void ARCWorldChunk::BeginPlay()
+void ARCWorldChunk::Init(ARCWorldManager* InWorldManager)
 {
-	Super::BeginPlay();
+	WorldManager = InWorldManager;
 
+	SetRender(false);
+	
 	WorldSettings = URCWorldSettings::GetSettings();
-
-	if (AGameModeBase* GameMode = GetWorld()->GetAuthGameMode())
-	{
-		if (const ARCGameModeBase* RCGameModeBase = Cast<ARCGameModeBase>(GameMode))
-		{
-			WorldManager = RCGameModeBase->GetWorldManager();
-		}
-	}
-
-	ProceduralMesh->SetVisibility(bIsRendered);
 
 	ChunkWorldCoords = GetActorLocation() / WorldSettings->BlockSize;
 	ChunkGridCoords = FVector2D( ChunkWorldCoords / WorldSettings->ChunkSize);
+
+	for (uint8 i = 0; i < static_cast<uint8>(EBlockType::Air); i++)
+	{
+		if (WorldManager)
+		{
+			UMaterialInterface* Material = WorldManager->GetDataAssetBlockFromType(static_cast<EBlockType>(i))->GetMaterial();
+			ProceduralMesh->SetMaterial(i, Material);
+		}
+	}
 
 	PerlinNoise = GeneratePerlinNoise();
 	InitChunkBlockData();
@@ -57,21 +55,29 @@ void ARCWorldChunk::EndInteract()
 	StopMining();
 }
 
-void ARCWorldChunk::SetRender(const bool Render)
+void ARCWorldChunk::SetRender(const bool bRender)
 {
-	if (bIsRendered == Render)
+	if (bIsRendered == bRender)
 		return;
 
-	bIsRendered = Render;
+	bIsRendered = bRender;
 	
-	if (Render)
-	{
-		ProceduralMesh->SetVisibility(true);
-	}
-	else
-	{
-		ProceduralMesh->SetVisibility(false);
-	}
+	ProceduralMesh->SetVisibility(bRender);
+	SetActorHiddenInGame(!bRender);
+	SetCollision(bRender);
+}
+
+void ARCWorldChunk::SetCollision(const bool bCollision)
+{
+	if (bIsCollision == bCollision)
+		return;
+
+	bIsCollision = bCollision;
+	
+	ProceduralMesh->SetActive(bCollision);
+	ProceduralMesh->SetComponentTickEnabled(bCollision);
+	ProceduralMesh->SetCollisionEnabled(bCollision ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
+	SetActorEnableCollision(bCollision);
 }
 
 void ARCWorldChunk::InitChunkBlockData()
@@ -114,9 +120,6 @@ void ARCWorldChunk::RenderChunk()
 		{
 			ProceduralMesh->CreateMeshSection(i, ChunkMeshes[i].Vertices, ChunkMeshes[i].Triangles, ChunkMeshes[i].Normals, ChunkMeshes[i].UVs, ChunkMeshes[i].VertexColors, ChunkMeshes[i].Tangents, true);
 		}
-		
-		UMaterialInterface* Material = WorldManager->GetDataAssetBlockFromType(static_cast<EBlockType>(i))->GetMaterial();
-		ProceduralMesh->SetMaterial(i, Material);
 	}
 }
 
@@ -131,11 +134,11 @@ void ARCWorldChunk::GenerateBlockFaces(const FVector& Coords)
 	TArray<FVector2D>& UVs = ChunkMeshes[MaterialIndex].UVs;
 	TArray<FColor>& VertexColors = ChunkMeshes[MaterialIndex].VertexColors;
 
-	const FBlockFaceVisibility BlockFaceVisibility = GetBlockFaceVisibilityFromCoords(Coords);
+	const TArray<bool> BlockFaceVisibility = GetBlockFaceVisibilityFromCoords(Coords);
 
 	for (int32 FaceIndex = 0; FaceIndex < Faces.Num(); FaceIndex++)
 	{
-		bool FaceVisible = BlockFaceVisibility.Faces[FaceIndex];
+		bool FaceVisible = BlockFaceVisibility[FaceIndex];
 		if (!FaceVisible)
 			continue;
 		
@@ -317,7 +320,7 @@ bool ARCWorldChunk::IsBlockAtCoords(const FVector& Coords) const
 	return true;
 }
 
-FBlockFaceVisibility ARCWorldChunk::GetBlockFaceVisibilityFromCoords(const FVector& Coords) const
+TArray<bool> ARCWorldChunk::GetBlockFaceVisibilityFromCoords(const FVector& Coords) const
 {
 	const bool South	= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y - 1, Coords.Z)));
 	const bool North	= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y + 1, Coords.Z)) && (Coords.Y + 1 <= WorldSettings->ChunkSize) );
@@ -326,7 +329,7 @@ FBlockFaceVisibility ARCWorldChunk::GetBlockFaceVisibilityFromCoords(const FVect
 	const bool Top		= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y, Coords.Z + 1)) );
 	const bool Bottom	= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y, Coords.Z - 1)) && (Coords.Z - 1 >= 0) );
 		
-	const FBlockFaceVisibility BlockFaceVisibility{South, North, West, East, Top, Bottom};
+	const TArray<bool> BlockFaceVisibility{South, North, West, East, Top, Bottom};
 
 	return BlockFaceVisibility;
 }

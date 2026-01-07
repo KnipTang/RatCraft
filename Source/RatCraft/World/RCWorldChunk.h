@@ -30,18 +30,18 @@ class RATCRAFT_API ARCWorldChunk : public AActor, public IRCInteractable
 public:	
 	ARCWorldChunk();
 
+	void Init(class ARCWorldManager* InWorldManager);
+
 	virtual void OnInteract() override;
 	virtual void EndInteract() override;
 
-	void SetRender(const bool Render);
+	void SetRender(const bool bRender);
+	void SetCollision(const bool bCollision);
 	
 	void SetCurrentlyLookAtBlock(const FVector& Coords);
 	bool IsMining() const { return bIsMining; }
 	
 	bool SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords);
-
-protected:
-	virtual void BeginPlay() override;
 
 private:
 	void InitChunkBlockData();
@@ -66,7 +66,7 @@ private:
 	float GetNoiseHeightAt(int X, int Z);
 	TArray<float> GeneratePerlinNoise() const;
 	
-	struct FBlockFaceVisibility GetBlockFaceVisibilityFromCoords(const FVector& Coords) const;
+	TArray<bool> GetBlockFaceVisibilityFromCoords(const FVector& Coords) const;
 	FVector GetLocalGridCoords(const FVector& GridCoords) const;
 
 	bool IsBlockAtCoords(const FVector& Coords) const;
@@ -80,7 +80,8 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	class UProceduralMeshComponent* ProceduralMesh;
 	
-	bool bIsRendered;
+	bool bIsRendered = true;
+	bool bIsCollision = true;
 	
 	TMap<FVector /*Coords*/, EBlockType> ChunkBlocksData;
 	TArray<FChunkMesh> ChunkMeshes;

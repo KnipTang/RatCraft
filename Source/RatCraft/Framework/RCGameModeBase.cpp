@@ -4,10 +4,6 @@
 #include "RCGameModeBase.h"
 #include "RatCraft/World/RCWorldManager.h"
 
-ARCGameModeBase::ARCGameModeBase()
-{
-}
-
 void ARCGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();

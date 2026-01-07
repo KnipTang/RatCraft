@@ -55,6 +55,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "World Management")
 	float UpdateWorldRenderCooldown = 1.f;
 	FTimerHandle UpdateWorldRenderTimerHandle;
+
+	FActorSpawnParameters SpawnParams;
 	
 	/***************************************************/
 	/*					Interacting						/
@@ -78,7 +80,7 @@ private:
 	bool CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight) const;
 	bool IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, float ColliderSize, float ColliderHeight) const;
 	
-	FVector2D GetChunkCoordsFromWorldCoords(const int X, const int Y) const;
+	FVector2D GetChunkCoordsFromWorldCoords(int X, int Y) const;
 
 	//WIREFRAME
 	UPROPERTY(EditDefaultsOnly)
