@@ -29,7 +29,7 @@ public:
 	
 	void UpdateInteractableChunk(const float InteractDistance, const FVector& ViewCamLocation, const FRotator& ViewCamRotation);
 
-	void SetPlayerInventory(class UInventory* InPlayerInventory);
+	void SetPlayerInventory(class URCInventory* InPlayerInventory);
 	
 	class ARCWorldChunk* GetChunkAtWorldCoords(const int X, const int Y);
 	class URCDataAssetBlock* GetDataAssetBlockFromType(EBlockType BlockType) const;
@@ -47,7 +47,7 @@ private:
 	const class URCWorldSettings* WorldSettings;
 
 	UPROPERTY()
-	class UInventory* PlayerInventory;
+	class URCInventory* PlayerInventory;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Blocks")
 	TMap<EBlockType, class URCDataAssetBlock*> BlockDataAsset;

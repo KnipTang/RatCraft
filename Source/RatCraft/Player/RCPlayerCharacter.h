@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "RatCraft/Character/RCCharacter.h"
+#include "RatCraft/World/Blocks/RCBlockStatics.h"
 #include "RCPlayerCharacter.generated.h"
 
 /**
@@ -39,7 +40,7 @@ private:
 	class ARCWorldManager* WorldManager;
 	
 	UPROPERTY()
-	class UInventory* Inventory;
+	class URCInventory* Inventory;
 
 	void SetPlayerGridCoords();
 	FVector PlayerGridCoords;
@@ -52,6 +53,7 @@ private:
 	void HandleLookInput(const struct FInputActionValue& InputActionValue);
 	void HandleMineInput(const struct FInputActionValue& InputActionValue);
 	void HandlePlaceInput(const struct FInputActionValue& InputActionValue);
+	void HandleChangeSelectedSlotInput(const struct FInputActionValue& InputActionValue);
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputMappingContext* GameplayInputMappingContext;
@@ -66,6 +68,8 @@ private:
 	class UInputAction* MineInputAction;
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputAction* PlaceInputAction;
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	class UInputAction* ChangeSelectedSlotAction;
 
 	/***************************************************/
 	/*					Player Setting					/

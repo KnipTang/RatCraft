@@ -8,7 +8,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "RatCraft/Framework/RCGameModeBase.h"
-#include "RatCraft/Inventory/Inventory.h"
+#include "RatCraft/Inventory/RCInventory.h"
 #include "RatCraft/World/RCWorldManager.h"
 #include "RatCraft/World/RCWorldSettings.h"
 
@@ -38,14 +38,15 @@ ARCPlayerCharacter::ARCPlayerCharacter()
 	MovementComp->bUseControllerDesiredRotation = false;
 	MovementComp->RotationRate = FRotator( 0.0f,720.0f,0.0f );
 
-	Inventory = CreateDefaultSubobject<UInventory>("Inventory");
+	Inventory = CreateDefaultSubobject<URCInventory>("Inventory Component");
 }
 
 void ARCPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	WorldSettings = URCWorldSettings::GetSettings();
+	
 	SetPlayerGridCoords();
 
 	if (AGameModeBase* GameMode = GetWorld()->GetAuthGameMode())
@@ -101,6 +102,7 @@ void ARCPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		EnhancedInputComp->BindAction(JumpInputAction, ETriggerEvent::Triggered, this, &ARCPlayerCharacter::Jump);
 		EnhancedInputComp->BindAction(MineInputAction, ETriggerEvent::Triggered, this, &ARCPlayerCharacter::HandleMineInput);
 		EnhancedInputComp->BindAction(PlaceInputAction, ETriggerEvent::Triggered, this, &ARCPlayerCharacter::HandlePlaceInput);
+		EnhancedInputComp->BindAction(ChangeSelectedSlotAction, ETriggerEvent::Triggered, this, &ARCPlayerCharacter::HandleChangeSelectedSlotInput);
 	}
 }
 
@@ -151,6 +153,12 @@ void ARCPlayerCharacter::HandlePlaceInput(const FInputActionValue& InputActionVa
 			WorldManager->UpdateInteractableChunk(InteractDistance, ViewCam->GetComponentLocation(), ViewCam->GetComponentRotation());
 		}
 	}
+}
+
+void ARCPlayerCharacter::HandleChangeSelectedSlotInput(const struct FInputActionValue& InputActionValue)
+{
+	const int8 ChangeValue = InputActionValue.Get<float>();
+	Inventory->UpdateSelectedSlot(ChangeValue);
 }
 
 void ARCPlayerCharacter::OnPlayerMovement()

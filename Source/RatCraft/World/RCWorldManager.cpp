@@ -8,7 +8,7 @@
 #include "Blocks/RCDataAssetBlock.h"
 #include "Kismet/GameplayStatics.h"
 #include "RatCraft/Abilities/RCAbilitySystemStatics.h"
-#include "RatCraft/Inventory/Inventory.h"
+#include "RatCraft/Inventory/RCInventory.h"
 #include "RatCraft/Player/RCPlayerCharacter.h"
 
 ARCWorldManager::ARCWorldManager()
@@ -266,7 +266,7 @@ void ARCWorldManager::UpdateInteractableChunk(const float InteractDistance, cons
 	CurrentlyLookAtChunk->SetCurrentlyLookAtBlock(LookAtBlockCoords);
 }
 
-void ARCWorldManager::SetPlayerInventory(class UInventory* InPlayerInventory)
+void ARCWorldManager::SetPlayerInventory(class URCInventory* InPlayerInventory)
 {
 	PlayerInventory = InPlayerInventory;
 }
