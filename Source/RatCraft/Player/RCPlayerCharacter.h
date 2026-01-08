@@ -37,6 +37,9 @@ private:
 	
 	UPROPERTY()
 	class ARCWorldManager* WorldManager;
+	
+	UPROPERTY()
+	class UInventory* Inventory;
 
 	void SetPlayerGridCoords();
 	FVector PlayerGridCoords;

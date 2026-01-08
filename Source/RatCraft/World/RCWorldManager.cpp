@@ -6,7 +6,10 @@
 #include "RCWorldSettings.h"
 #include "Blocks/RCBlock.h"
 #include "Blocks/RCDataAssetBlock.h"
+#include "Kismet/GameplayStatics.h"
 #include "RatCraft/Abilities/RCAbilitySystemStatics.h"
+#include "RatCraft/Inventory/Inventory.h"
+#include "RatCraft/Player/RCPlayerCharacter.h"
 
 ARCWorldManager::ARCWorldManager()
 {
@@ -95,12 +98,12 @@ void ARCWorldManager::HandleChunkLoading(const FVector* PlayerGridCoords)
 	
 	CurrentlyStandOnChunkCoords = ChunkCoords;
 
-	int ChunkDistance = WorldSettings->RenderDistance / WorldSettings->ChunkSize;
+	uint8 ChunkDistance = WorldSettings->RenderDistance / WorldSettings->ChunkSize;
 	ChunkDistance++;
 	
-	for (int x = -ChunkDistance; x <= ChunkDistance; x++)
+	for (int8 x = -ChunkDistance; x <= ChunkDistance; x++)
 	{
-		for (int y = -ChunkDistance; y <= ChunkDistance; y++)
+		for (int8 y = -ChunkDistance; y <= ChunkDistance; y++)
 		{
 			RenderChunk(FVector2D(ChunkCoords.X + x, ChunkCoords.Y + y));
 		}
@@ -143,7 +146,7 @@ ARCWorldChunk* ARCWorldManager::AddChunk(const int X, const int Y)
 	return NewChunk;
 }
 
-void ARCWorldManager::Mining(const bool bIsPressed)
+void ARCWorldManager::Mining(const bool bIsPressed) const
 {
 	if (!bIsLookingAtChunk)
 		return;
@@ -151,20 +154,27 @@ void ARCWorldManager::Mining(const bool bIsPressed)
 	if (bIsPressed)
 	{
 		if (!CurrentlyLookAtChunk->IsMining())
-			CurrentlyLookAtChunk->OnInteract();
+			CurrentlyLookAtChunk->StartMining();
 	}
 	else //Released
 	{
-		CurrentlyLookAtChunk->EndInteract();
+		CurrentlyLookAtChunk->StopMining();
 	}
-	
+
 	UpdateWireframe();
 }
 
-bool ARCWorldManager::SpawnBlock(const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight)
+void ARCWorldManager::OnBlockMined(const EBlockType BlockType) const
 {
-	
+	PlayerInventory->AddItem(static_cast<uint8>(BlockType));
+}
+
+bool ARCWorldManager::SpawnBlock(const EBlockType BlockType, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight)
+{
 	if (!bCanPlaceBlock)
+		return false;
+
+	if (BlockType == EBlockType::Air)
 		return false;
 	
 	StartCanPlaceBlockTimer();
@@ -185,7 +195,7 @@ bool ARCWorldManager::SpawnBlock(const FVector& PlayerGridCoords, const float Co
 		FoundChunk = AllChunks.FindChecked(ChunkCoords);
 	}
 
-	const bool bSucceeded = FoundChunk->SpawnBlock(EBlockType::Dirt, Coords);
+	const bool bSucceeded = FoundChunk->SpawnBlock(BlockType, Coords);
 
 	if (!bSucceeded)
 		return false;
@@ -256,7 +266,12 @@ void ARCWorldManager::UpdateInteractableChunk(const float InteractDistance, cons
 	CurrentlyLookAtChunk->SetCurrentlyLookAtBlock(LookAtBlockCoords);
 }
 
-class ARCWorldChunk* ARCWorldManager::GetChunkAtWorldCoords(const int X, const int Y)
+void ARCWorldManager::SetPlayerInventory(class UInventory* InPlayerInventory)
+{
+	PlayerInventory = InPlayerInventory;
+}
+
+ARCWorldChunk* ARCWorldManager::GetChunkAtWorldCoords(const int X, const int Y)
 {
 	FVector2D ChunkCoords = GetChunkCoordsFromWorldCoords(X, Y);
 	
@@ -271,7 +286,10 @@ class ARCWorldChunk* ARCWorldManager::GetChunkAtWorldCoords(const int X, const i
 void ARCWorldManager::LookAtChunkChanged(ARCWorldChunk* NewChunk)
 {
 	if (CurrentlyLookAtChunk)
-		CurrentlyLookAtChunk->EndInteract();
+	{
+		if (CurrentlyLookAtChunk->IsMining())
+			CurrentlyLookAtChunk->StopMining();
+	}
 	
 	CurrentlyLookAtChunk = NewChunk;
 }

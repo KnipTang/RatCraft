@@ -8,6 +8,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "RatCraft/Framework/RCGameModeBase.h"
+#include "RatCraft/Inventory/Inventory.h"
 #include "RatCraft/World/RCWorldManager.h"
 #include "RatCraft/World/RCWorldSettings.h"
 
@@ -36,6 +37,8 @@ ARCPlayerCharacter::ARCPlayerCharacter()
 	MovementComp->bOrientRotationToMovement = false;
 	MovementComp->bUseControllerDesiredRotation = false;
 	MovementComp->RotationRate = FRotator( 0.0f,720.0f,0.0f );
+
+	Inventory = CreateDefaultSubobject<UInventory>("Inventory");
 }
 
 void ARCPlayerCharacter::BeginPlay()
@@ -50,6 +53,7 @@ void ARCPlayerCharacter::BeginPlay()
 		if (ARCGameModeBase* RCGameModeBase = Cast<ARCGameModeBase>(GameMode))
 		{
 			WorldManager = RCGameModeBase->GetWorldManager();
+			WorldManager->SetPlayerInventory(Inventory);
 		}
 	}
 
@@ -127,7 +131,7 @@ void ARCPlayerCharacter::HandleMineInput(const FInputActionValue& InputActionVal
 {
 	if (!WorldManager)
 		return;
-	
+
 	WorldManager->Mining(InputActionValue.Get<bool>());
 }
 
@@ -138,10 +142,14 @@ void ARCPlayerCharacter::HandlePlaceInput(const FInputActionValue& InputActionVa
 	
 	if (InputActionValue.Get<bool>())
 	{
-		bool bSucceeded = WorldManager->SpawnBlock(PlayerGridCoords, GetCapsuleComponent()->GetScaledCapsuleRadius(), GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+		const EBlockType BlockTypeToSpawn = static_cast<EBlockType>(Inventory->GetCurrentlyHoldingBlockTypeID());
+		bool bSucceeded = WorldManager->SpawnBlock(BlockTypeToSpawn, PlayerGridCoords, GetCapsuleComponent()->GetScaledCapsuleRadius(), GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 
 		if (bSucceeded)
+		{
+			Inventory->RemoveItem();
 			WorldManager->UpdateInteractableChunk(InteractDistance, ViewCam->GetComponentLocation(), ViewCam->GetComponentRotation());
+		}
 	}
 }
 

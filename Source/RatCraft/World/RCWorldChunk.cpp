@@ -45,16 +45,6 @@ void ARCWorldChunk::Init(ARCWorldManager* InWorldManager)
 	RenderChunk();
 }
 
-void ARCWorldChunk::OnInteract()
-{
-	StartMining();
-}
-
-void ARCWorldChunk::EndInteract()
-{
-	StopMining();
-}
-
 void ARCWorldChunk::SetRender(const bool bRender)
 {
 	if (bIsRendered == bRender)
@@ -243,6 +233,8 @@ void ARCWorldChunk::StopMining()
 
 void ARCWorldChunk::OnBlockMined()
 {
+	const EBlockType Type = ChunkBlocksData.FindChecked(LookAtBlockCoords);
+	WorldManager->OnBlockMined(Type);
 	StopMining();
 	UpdateChunkBlocksDataAtBlockCoords(EBlockType::Air, LookAtBlockCoords);
 	CheckIfChunkBorderCubeGotUpdated(EBlockType::Air, LookAtBlockCoords);

@@ -20,14 +20,17 @@ public:
 
 	void EnableChunkLoading(const FVector* PlayerGridCoords);
 
-	void Mining(const bool bIsPressed);
+	void Mining(const bool bIsPressed) const;
+	void OnBlockMined(const EBlockType BlockType) const;
 
-	bool SpawnBlock(const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight);
+	bool SpawnBlock(const EBlockType BlockType,const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight);
 	
 	void UpdateWireframe() const;
 	
 	void UpdateInteractableChunk(const float InteractDistance, const FVector& ViewCamLocation, const FRotator& ViewCamRotation);
 
+	void SetPlayerInventory(class UInventory* InPlayerInventory);
+	
 	class ARCWorldChunk* GetChunkAtWorldCoords(const int X, const int Y);
 	class URCDataAssetBlock* GetDataAssetBlockFromType(EBlockType BlockType) const;
 	UMaterialInterface* GetMaterialFromTypeID(const uint8 BlockTypeID);
@@ -43,6 +46,9 @@ private:
 	UPROPERTY()
 	const class URCWorldSettings* WorldSettings;
 
+	UPROPERTY()
+	class UInventory* PlayerInventory;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Blocks")
 	TMap<EBlockType, class URCDataAssetBlock*> BlockDataAsset;
 	

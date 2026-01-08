@@ -23,7 +23,7 @@ GENERATED_BODY()
 };
 
 UCLASS()
-class RATCRAFT_API ARCWorldChunk : public AActor, public IRCInteractable
+class RATCRAFT_API ARCWorldChunk : public AActor
 {
 	GENERATED_BODY()
 	
@@ -32,8 +32,8 @@ public:
 
 	void Init(class ARCWorldManager* InWorldManager);
 
-	virtual void OnInteract() override;
-	virtual void EndInteract() override;
+	void StartMining();
+	void StopMining();
 
 	void SetRender(const bool bRender);
 	void SetCollision(const bool bCollision);
@@ -58,8 +58,6 @@ private:
 	void CheckIfChunkBorderCubeGotUpdated(const EBlockType UpdatedBlockType, const FVector& Coords) const;
 	
 	//MINING
-	void StartMining();
-	void StopMining();
 	void OnBlockMined();
 	void UpdateMiningProgress();
 	UPROPERTY()
