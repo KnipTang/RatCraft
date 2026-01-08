@@ -46,7 +46,7 @@ void ARCPlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 	
 	WorldSettings = URCWorldSettings::GetSettings();
-	
+	Inventory->Init();
 	SetPlayerGridCoords();
 
 	if (AGameModeBase* GameMode = GetWorld()->GetAuthGameMode())

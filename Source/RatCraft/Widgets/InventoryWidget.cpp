@@ -7,6 +7,7 @@
 #include "Components/WrapBox.h"
 #include "Components/WrapBoxSlot.h"
 #include "RatCraft/Inventory/RCInventory.h"
+#include "RatCraft/Inventory/RCInventoryItem.h"
 
 void UInventoryWidget::NativeConstruct()
 {
@@ -41,7 +42,7 @@ void UInventoryWidget::NativeConstruct()
 	}
 }
 
-void UInventoryWidget::ItemAdded(const class UInventoryItem* InventoryItem)
+void UInventoryWidget::ItemAdded(const class URCInventoryItem* InventoryItem)
 {
 	const uint8 BlockTypeID = InventoryItem->BlockTypeID;
 	UItemWidget* ItemWidget{};
@@ -60,7 +61,7 @@ void UInventoryWidget::ItemAdded(const class UInventoryItem* InventoryItem)
 	ItemWidget->UpdateInventoryItem(InventoryItem, InventoryItemsData.FindChecked(static_cast<EBlockType>(BlockTypeID)));
 }
 
-void UInventoryWidget::ItemRemove(const class UInventoryItem* InventoryItem)
+void UInventoryWidget::ItemRemove(const class URCInventoryItem* InventoryItem)
 {
 	uint8 BlockTypeID = InventoryItem->BlockTypeID;
 	if (PopulatedItemEntryWidgets.Contains(BlockTypeID))

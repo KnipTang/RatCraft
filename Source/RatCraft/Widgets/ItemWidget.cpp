@@ -5,6 +5,7 @@
 
 #include "Components/Border.h"
 #include "Components/Image.h"
+#include "RatCraft/Inventory/RCInventoryItem.h"
 #include "RatCraft/Inventory/RC_DataAssetBlockInventory.h"
 #include "RatCraft/World/Blocks/RCBlockStatics.h"
 
@@ -14,7 +15,7 @@ void UItemWidget::NativeConstruct()
 	EmptySlot();
 }
 
-void UItemWidget::UpdateInventoryItem(const UInventoryItem* InInventoryItem, const URC_DataAssetBlockInventory* DataAsset)
+void UItemWidget::UpdateInventoryItem(const URCInventoryItem* InInventoryItem, const URC_DataAssetBlockInventory* DataAsset)
 {
 	InventoryItem = InInventoryItem;
 	if (!InventoryItem)

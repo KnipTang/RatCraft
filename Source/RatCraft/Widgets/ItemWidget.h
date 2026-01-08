@@ -18,7 +18,7 @@ class RATCRAFT_API UItemWidget : public UUserWidget
 public:
 	virtual void NativeConstruct() override;
 
-	void UpdateInventoryItem(const class UInventoryItem* InInventoryItem, const class URC_DataAssetBlockInventory* DataAsset);
+	void UpdateInventoryItem(const class URCInventoryItem* InInventoryItem, const class URC_DataAssetBlockInventory* DataAsset);
 	
 	bool IsEmpty() const;
 	void EmptySlot();
@@ -41,7 +41,7 @@ private:
 	class UTexture2D* EmptyTexture;
 
 	UPROPERTY()
-	const class UInventoryItem* InventoryItem;
+	const class URCInventoryItem* InventoryItem;
 	
 	int SlotNumber;
 };

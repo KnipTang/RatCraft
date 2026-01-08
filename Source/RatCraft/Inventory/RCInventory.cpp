@@ -3,14 +3,15 @@
 
 #include "RCInventory.h"
 
+#include "RCInventoryItem.h"
 #include "RatCraft/World/Blocks/RCBlockStatics.h"
 
-void URCInventory::BeginPlay()
+void URCInventory::Init()
 {
 	AirBlockTypeID = static_cast<uint8>(EBlockType::Air);
 	for (uint8 i = 0; i < InventoryCapacity; i++)
 	{
-		UInventoryItem* Item = NewObject<UInventoryItem>(this);
+		URCInventoryItem* Item = NewObject<URCInventoryItem>(this);
 		Item->Init(
 			AirBlockTypeID, 0, i
 			);
@@ -21,7 +22,7 @@ void URCInventory::BeginPlay()
 
 void URCInventory::AddItem(const uint8 BlockTypeID)
 {
-	UInventoryItem* Item = GetItem(BlockTypeID);
+	URCInventoryItem* Item = GetItem(BlockTypeID);
 
 	if (Item->Count == InvalidCount)
 		return;
@@ -34,7 +35,7 @@ void URCInventory::AddItem(const uint8 BlockTypeID)
 
 void URCInventory::RemoveItem()
 {
-	UInventoryItem* Item = InventoryStorage[CurrentlySelectedSlot];
+	URCInventoryItem* Item = InventoryStorage[CurrentlySelectedSlot];
 
 	Item->Count--;
 	
@@ -61,7 +62,7 @@ uint8 URCInventory::GetCurrentlyHoldingBlockTypeID()
 	return InventoryStorage[CurrentlySelectedSlot]->BlockTypeID;
 }
 
-UInventoryItem* URCInventory::GetItem(const uint8 BlockTypeID)
+URCInventoryItem* URCInventory::GetItem(const uint8 BlockTypeID)
 {
 	for (uint8 i = 0; i < InventoryStorage.Num(); i++)
 	{

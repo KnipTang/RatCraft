@@ -36,8 +36,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
 	TMap<EBlockType /*BlockTypeID*/, class URC_DataAssetBlockInventory*> InventoryItemsData;
 
-	void ItemAdded(const class UInventoryItem* InventoryItem);
-	void ItemRemove(const class UInventoryItem* InventoryItem);
+	void ItemAdded(const class URCInventoryItem* InventoryItem);
+	void ItemRemove(const class URCInventoryItem* InventoryItem);
 
 	void UpdateSelectedSlot(const uint8 SelectedSlot);
 	UPROPERTY()
