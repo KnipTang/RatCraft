@@ -16,57 +16,27 @@ enum class EBlockType : uint8
 	Air							UMETA(DisplayName = "Air"),
 };
 
-USTRUCT()
-struct FBlockFaceVisibility
+static EBlockType GetBlockTypeFromHeight(const URCWorldSettings& WorldSettings, const int TerrainHeight, const int BlockHeight)
 {
-	GENERATED_BODY()
-	
-public:
-	FBlockFaceVisibility() :
-		South(false), North(false), West(false), East(false), Top(false), Bottom(false)
-	{
-		Faces = {South, North, West, East, Top, Bottom};
-	}
-	FBlockFaceVisibility(bool InSouth, bool InNorth, bool InWest, bool InEast, bool InTop, bool InBottom) :
-		South(InSouth), North(InNorth), West(InWest), East(InEast), Top(InTop), Bottom(InBottom)
-	{
-		Faces = {South, North, West, East, Top, Bottom};
-	}
-
-	
-	bool South = false;
-	bool North = false;
-	bool West = false;
-	bool East = false;
-	bool Top = false;
-	bool Bottom = false;
-
-	TArray<bool> Faces;
-};
-
-static EBlockType GetBlockTypeFromHeight(const URCWorldSettings* WorldSettings, const int TerrainHeight, const int BlockHeight)
-{
-	const int RandomOffset = 0;
-
-	const int ChunkHeight = WorldSettings->ChunkHeight;
-	const int RockLevel = WorldSettings->RockLevel;
-	const int SnowLevel = WorldSettings->SnowLevel;
+	const int ChunkHeight = WorldSettings.ChunkHeight;
+	const int RockLevel = WorldSettings.RockLevel;
+	const int SnowLevel = WorldSettings.SnowLevel;
 	
 	if (BlockHeight > TerrainHeight)
 		return EBlockType::Air;
-	else if (BlockHeight == TerrainHeight && BlockHeight < ChunkHeight - (SnowLevel + RandomOffset))
+	else if (BlockHeight == TerrainHeight && BlockHeight < ChunkHeight - (SnowLevel))
 		return EBlockType::Grass;
-	else if (BlockHeight >= TerrainHeight - (RockLevel - RandomOffset) && BlockHeight < ChunkHeight - (SnowLevel + RandomOffset))
+	else if (BlockHeight >= TerrainHeight - (RockLevel) && BlockHeight < ChunkHeight - (SnowLevel))
 		return EBlockType::Dirt;
-	else if (BlockHeight <= TerrainHeight - (RockLevel - RandomOffset))
+	else if (BlockHeight <= TerrainHeight - (RockLevel))
 		return EBlockType::Stone;
-	else if (BlockHeight >= ChunkHeight - (SnowLevel + RandomOffset))
+	else if (BlockHeight >= ChunkHeight - (SnowLevel))
 		return EBlockType::Snow;
 	
 	return EBlockType::Air;
 }
 
-static TArray<TArray<int32>> Faces = {
+static TArray<TArray<uint8>> Faces = {
 	{3, 2, 1, 0}, // South
 	{6, 7, 4, 5}, // North
 	{7, 3, 0, 4}, // West

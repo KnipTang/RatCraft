@@ -51,9 +51,7 @@ private:
 	
 	void RenderChunk();
 	void GenerateBlockFaces(const FVector& BlockCoords);
-	void UpdateChunk(const FVector& BlockCoords);
-	void UpdateBlockFaces(const FVector& BlockCoords);
-
+	
 	void CreateProceduralMesh();
 	
 	bool UpdateChunkBlocksDataAtBlockCoords(const EBlockType BlockTypeToSpawn, const FVector& BlockCoords);
@@ -70,13 +68,14 @@ private:
 	void LookAtBlockChanged();
 	
 	//GETTERS
-	float GetNoiseHeightAt(int X, int Z);
+	uint8 GetNoiseHeightAt(int X, int Z);
 	TArray<float> GeneratePerlinNoise() const;
 	
 	TArray<bool> GetBlockFaceVisibilityFromCoords(const FVector& Coords) const;
 	FVector GetLocalGridCoords(const FVector& GridCoords) const;
 
 	bool IsBlockAtCoords(const FVector& Coords) const;
+
 private:
 	UPROPERTY()
 	const class URCWorldSettings* WorldSettings;

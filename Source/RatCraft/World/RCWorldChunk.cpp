@@ -82,17 +82,16 @@ void ARCWorldChunk::SetCollision(const bool bCollision)
 
 void ARCWorldChunk::InitChunkBlockData()
 {
-	for (int X = -1; X < WorldSettings->ChunkSize + 1; X++)
+	for (int8 X = -1; X < WorldSettings->ChunkSize + 1; X++)
 	{
-		for (int Z = -1; Z < WorldSettings->ChunkSize + 1; Z++)
+		for (int8 Z = -1; Z < WorldSettings->ChunkSize + 1; Z++)
 		{
-			float NoiseHeight = GetNoiseHeightAt(X + 1, Z + 1);
-			NoiseHeight = FMath::Clamp(NoiseHeight, 0.4f, 1.f);
-			int TerrainHeight = FMath::RoundToInt(NoiseHeight * WorldSettings->ChunkHeight);
+			const uint8 TerrainHeight = GetNoiseHeightAt(X + 1, Z + 1);
 			for (uint8 Y = 0; Y < WorldSettings->ChunkHeight; Y++)
 			{
 				const FVector Coords = FVector(X, Z, Y);
-				ChunkBlocksData.Emplace(Coords, GetBlockTypeFromHeight(WorldSettings, TerrainHeight, Y));
+				EBlockType BlockType = GetBlockTypeFromHeight(*WorldSettings, TerrainHeight, Y);
+				ChunkBlocksData.Add(Coords, BlockType);
 			}
 		}
 	}
@@ -103,7 +102,7 @@ void ARCWorldChunk::RenderChunk()
 	ChunkMeshes = {};
 	ChunkMeshes.SetNum(static_cast<uint8>(EBlockType::Air));
 	
-	for (TPair<FVector /*Coords*/, EBlockType> BlockData : ChunkBlocksData)
+	for (TPair<FVector /*Coords*/, EBlockType>& BlockData : ChunkBlocksData)
 	{
 		if (BlockData.Value == EBlockType::Air)
 			continue;
@@ -120,7 +119,7 @@ void ARCWorldChunk::GenerateBlockFaces(const FVector& BlockCoords)
 {
 	EBlockType BlockType = ChunkBlocksData[BlockCoords];
 	
-	const uint8 MaterialIndex = static_cast<int32>(BlockType);
+	const uint8 MaterialIndex = static_cast<uint8>(BlockType);
 	
 	TArray<FVector>& Vertices = ChunkMeshes[MaterialIndex].Vertices;
 	TArray<int32>& Triangles = ChunkMeshes[MaterialIndex].Triangles;
@@ -130,16 +129,16 @@ void ARCWorldChunk::GenerateBlockFaces(const FVector& BlockCoords)
 
 	const TArray<bool> BlockFaceVisibility = GetBlockFaceVisibilityFromCoords(BlockCoords);
 
-	for (int32 FaceIndex = 0; FaceIndex < Faces.Num(); FaceIndex++)
+	for (uint8 FaceIndex = 0; FaceIndex < Faces.Num(); FaceIndex++)
 	{
 		bool FaceVisible = BlockFaceVisibility[FaceIndex];
 		if (!FaceVisible)
 			continue;
 		
-		const TArray<int32>& Face = Faces[FaceIndex];
-		int32 BaseIndex = Vertices.Num();
+		const TArray<uint8>& Face = Faces[FaceIndex];
+		uint32 BaseIndex = Vertices.Num();
 
-		for (int32 i = 0; i < 4; i++)
+		for (uint8 i = 0; i < 4; i++)
 		{
 			Vertices.Add(GetCubeVertices(WorldSettings->GetHalfBlockSize())[Face[i]] + (BlockCoords * WorldSettings->BlockSize) + WorldSettings->GetHalfBlockSize());
         	
@@ -161,33 +160,6 @@ void ARCWorldChunk::GenerateBlockFaces(const FVector& BlockCoords)
 		Triangles.Add(BaseIndex + 3);
 	}
 }
-
-void ARCWorldChunk::UpdateChunk(const FVector& BlockCoords)
-{
-	UpdateBlockFaces(BlockCoords);
-	UpdateBlockFaces(FVector(BlockCoords.X, BlockCoords.Y - 1, BlockCoords.Z));
-	UpdateBlockFaces(FVector(BlockCoords.X, BlockCoords.Y + 1, BlockCoords.Z));
-	UpdateBlockFaces(FVector(BlockCoords.X - 1, BlockCoords.Y, BlockCoords.Z));
-	UpdateBlockFaces(FVector(BlockCoords.X + 1, BlockCoords.Y, BlockCoords.Z));
-	UpdateBlockFaces(FVector(BlockCoords.X, BlockCoords.Y, BlockCoords.Z + 1));
-	UpdateBlockFaces(FVector(BlockCoords.X, BlockCoords.Y, BlockCoords.Z - 1));
-	
-	CreateProceduralMesh();
-}
-
-void ARCWorldChunk::UpdateBlockFaces(const FVector& BlockCoords)
-{
-	EBlockType BlockType = ChunkBlocksData[BlockCoords];
-	if (BlockType == EBlockType::Air)
-	{
-		GenerateBlockFaces(BlockCoords);
-		return;
-	}
-
-	
-}
-
-
 
 void ARCWorldChunk::CreateProceduralMesh()
 {
@@ -343,19 +315,21 @@ TArray<float> ARCWorldChunk::GeneratePerlinNoise() const
 		);
 }
 
-float ARCWorldChunk::GetNoiseHeightAt(int X, int Z)
+uint8 ARCWorldChunk::GetNoiseHeightAt(int X, int Z)
 {
 	if (PerlinNoise.Num() == 0)
-		return 0.0f;
+		return 0;
 	
 	const int NoiseIndex = X + Z * (WorldSettings->ChunkSize + 2);
 	
 	if (NoiseIndex >= 0 && NoiseIndex < PerlinNoise.Num())
 	{
-		return PerlinNoise[NoiseIndex];
+		float NoiseHeight = PerlinNoise[NoiseIndex];
+		const uint8 Height = NoiseHeight * WorldSettings->ChunkHeight;
+		return Height;
 	}
     
-	return 0.0f;
+	return 0;
 }
 
 bool ARCWorldChunk::IsBlockAtCoords(const FVector& Coords) const
