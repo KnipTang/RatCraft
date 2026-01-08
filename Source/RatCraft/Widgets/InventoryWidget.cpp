@@ -44,35 +44,35 @@ void UInventoryWidget::NativeConstruct()
 
 void UInventoryWidget::ItemAdded(const class URCInventoryItem* InventoryItem)
 {
-	const uint8 BlockTypeID = InventoryItem->BlockTypeID;
+	const EBlockType BlockType = InventoryItem->BlockType;
 	UItemWidget* ItemWidget{};
-	if (!PopulatedItemEntryWidgets.Contains(BlockTypeID))
+	if (!PopulatedItemEntryWidgets.Contains(BlockType))
 	{
 		if (UItemWidget* NextAvailableSlot = GetNextAvailableSlot())
 		{
-			PopulatedItemEntryWidgets.Add(BlockTypeID, NextAvailableSlot);
+			PopulatedItemEntryWidgets.Add(BlockType, NextAvailableSlot);
 			ItemWidget = NextAvailableSlot;
 		}
 	}
 	else
 	{
-		ItemWidget = PopulatedItemEntryWidgets[BlockTypeID];
+		ItemWidget = PopulatedItemEntryWidgets[BlockType];
 	}
-	ItemWidget->UpdateInventoryItem(InventoryItem, InventoryItemsData.FindChecked(static_cast<EBlockType>(BlockTypeID)));
+	ItemWidget->UpdateInventoryItem(InventoryItem, InventoryItemsData.FindChecked(BlockType));
 }
 
 void UInventoryWidget::ItemRemove(const class URCInventoryItem* InventoryItem)
 {
-	uint8 BlockTypeID = InventoryItem->BlockTypeID;
-	if (PopulatedItemEntryWidgets.Contains(BlockTypeID))
+	EBlockType BlockType = InventoryItem->BlockType;
+	if (PopulatedItemEntryWidgets.Contains(BlockType))
 	{
-		UItemWidget* ItemWidget = PopulatedItemEntryWidgets[BlockTypeID];
+		UItemWidget* ItemWidget = PopulatedItemEntryWidgets[BlockType];
 
 		if (InventoryItem->Count <= 0)
 		{
-			BlockTypeID = static_cast<uint8>(EBlockType::Air);
+			BlockType = EBlockType::Air;
 		}
-		ItemWidget->UpdateInventoryItem(InventoryItem, InventoryItemsData.FindChecked(static_cast<EBlockType>(BlockTypeID)));
+		ItemWidget->UpdateInventoryItem(InventoryItem, InventoryItemsData.FindChecked(BlockType));
 	}
 }
 

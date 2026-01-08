@@ -6,10 +6,8 @@
 #include "RCWorldSettings.h"
 #include "Blocks/RCBlock.h"
 #include "Blocks/RCDataAssetBlock.h"
-#include "Kismet/GameplayStatics.h"
 #include "RatCraft/Abilities/RCAbilitySystemStatics.h"
 #include "RatCraft/Inventory/RCInventory.h"
-#include "RatCraft/Player/RCPlayerCharacter.h"
 
 ARCWorldManager::ARCWorldManager()
 {
@@ -166,7 +164,7 @@ void ARCWorldManager::Mining(const bool bIsPressed) const
 
 void ARCWorldManager::OnBlockMined(const EBlockType BlockType) const
 {
-	PlayerInventory->AddItem(static_cast<uint8>(BlockType));
+	PlayerInventory->AddItem(BlockType);
 }
 
 bool ARCWorldManager::SpawnBlock(const EBlockType BlockType, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight)
@@ -355,7 +353,7 @@ UMaterialInterface* ARCWorldManager::GetMaterialFromTypeID(const uint8 BlockType
 {
 	if (!BlockTypeMaterials.Contains(BlockTypeID))
 	{
-		UMaterialInterface* Material = GetDataAssetBlockFromType(static_cast<EBlockType>(BlockTypeID))->GetMaterial();
+		UMaterialInterface* Material = GetDataAssetBlockFromType(ToTEnum<EBlockType>(BlockTypeID))->GetMaterial();
 		BlockTypeMaterials.Emplace(BlockTypeID, Material);
 		return Material;
 	}

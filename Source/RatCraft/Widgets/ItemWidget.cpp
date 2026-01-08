@@ -39,7 +39,7 @@ void UItemWidget::ChangeSelected(bool bSelected) const
 
 bool UItemWidget::IsEmpty() const
 {
-	return !InventoryItem || InventoryItem->BlockTypeID == static_cast<uint8>(EBlockType::Air);
+	return !InventoryItem || InventoryItem->BlockType == EBlockType::Air;
 }
 
 void UItemWidget::EmptySlot()

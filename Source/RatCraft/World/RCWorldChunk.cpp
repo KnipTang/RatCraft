@@ -31,7 +31,7 @@ void ARCWorldChunk::Init(ARCWorldManager* InWorldManager)
 	ChunkWorldCoords = GetActorLocation() / WorldSettings->BlockSize;
 	ChunkGridCoords = FVector2D( ChunkWorldCoords / WorldSettings->ChunkSize);
 
-	for (uint8 i = 0; i < static_cast<uint8>(EBlockType::Air); i++)
+	for (uint8 i = 0; i < BlockTypesCount; i++)
 	{
 		if (WorldManager)
 		{
@@ -90,7 +90,7 @@ void ARCWorldChunk::InitChunkBlockData()
 void ARCWorldChunk::RenderChunk()
 {
 	ChunkMeshes = {};
-	ChunkMeshes.SetNum(static_cast<uint8>(EBlockType::Air));
+	ChunkMeshes.SetNum(BlockTypesCount);
 	
 	for (TPair<FVector /*Coords*/, EBlockType>& BlockData : ChunkBlocksData)
 	{
@@ -109,7 +109,7 @@ void ARCWorldChunk::GenerateBlockFaces(const FVector& BlockCoords)
 {
 	EBlockType BlockType = ChunkBlocksData[BlockCoords];
 	
-	const uint8 MaterialIndex = static_cast<uint8>(BlockType);
+	const uint8 MaterialIndex = ToUInt8(BlockType);
 	
 	TArray<FVector>& Vertices = ChunkMeshes[MaterialIndex].Vertices;
 	TArray<int32>& Triangles = ChunkMeshes[MaterialIndex].Triangles;

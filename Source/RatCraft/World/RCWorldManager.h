@@ -50,7 +50,7 @@ private:
 	class URCInventory* PlayerInventory;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Blocks")
-	TMap<EBlockType, class URCDataAssetBlock*> BlockDataAsset;
+	TMap<TEnumAsByte<EBlockType>, class URCDataAssetBlock*> BlockDataAsset;
 	
 	UPROPERTY()
 	TMap<uint8 /*BlockTypeID*/, UMaterialInterface*> BlockTypeMaterials;

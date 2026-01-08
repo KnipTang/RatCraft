@@ -7,7 +7,7 @@
 #include "RCBlockStatics.generated.h"
 
 UENUM(BlueprintType)
-enum class EBlockType : uint8
+enum EBlockType : uint8
 {
 	Grass 						UMETA(DisplayName = "Grass"),
 	Dirt						UMETA(DisplayName = "Dirt"),
@@ -15,6 +15,20 @@ enum class EBlockType : uint8
 	Snow						UMETA(DisplayName = "Snow"),
 	Air							UMETA(DisplayName = "Air"),
 };
+
+template<typename TEnum>
+FORCEINLINE uint8 ToUInt8(TEnum EnumValue)
+{
+    return static_cast<uint8>(EnumValue);
+}
+
+template<typename TEnum>
+FORCEINLINE TEnum ToTEnum(uint8 Value)
+{
+    return static_cast<TEnum>(Value);
+}
+
+static uint8 BlockTypesCount = ToUInt8(EBlockType::Air);
 
 static EBlockType GetBlockTypeFromHeight(const URCWorldSettings& WorldSettings, const int TerrainHeight, const int BlockHeight)
 {

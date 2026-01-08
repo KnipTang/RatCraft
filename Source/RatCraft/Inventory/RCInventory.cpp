@@ -8,21 +8,20 @@
 
 void URCInventory::Init()
 {
-	AirBlockTypeID = static_cast<uint8>(EBlockType::Air);
 	for (uint8 i = 0; i < InventoryCapacity; i++)
 	{
 		URCInventoryItem* Item = NewObject<URCInventoryItem>(this);
 		Item->Init(
-			AirBlockTypeID, 0, i
+			EBlockType::Air, 0, i
 			);
 		OnItemAdded.Broadcast(Item);
 		InventoryStorage.Emplace(Item);
 	}
 }
 
-void URCInventory::AddItem(const uint8 BlockTypeID)
+void URCInventory::AddItem(const EBlockType BlockType)
 {
-	URCInventoryItem* Item = GetItem(BlockTypeID);
+	URCInventoryItem* Item = GetItem(BlockType);
 
 	if (Item->Count == InvalidCount)
 		return;
@@ -43,7 +42,7 @@ void URCInventory::RemoveItem()
 	
 	if (Item->Count <= 0)
 	{
-		Item->BlockTypeID = AirBlockTypeID;
+		Item->BlockType = EBlockType::Air;
 	}
 }
 
@@ -57,24 +56,24 @@ void URCInventory::UpdateSelectedSlot(const int8 UpdateValue)
 	OnUpdateSelectedSlot.Broadcast(CurrentlySelectedSlot);
 }
 
-uint8 URCInventory::GetCurrentlyHoldingBlockTypeID()
+EBlockType URCInventory::GetCurrentlyHoldingBlockType()
 {
-	return InventoryStorage[CurrentlySelectedSlot]->BlockTypeID;
+	return InventoryStorage[CurrentlySelectedSlot]->BlockType;
 }
 
-URCInventoryItem* URCInventory::GetItem(const uint8 BlockTypeID)
+URCInventoryItem* URCInventory::GetItem(const EBlockType BlockType)
 {
-	for (uint8 i = 0; i < InventoryStorage.Num(); i++)
+	for (URCInventoryItem* Item : InventoryStorage)
 	{
-		if (InventoryStorage[i]->BlockTypeID == BlockTypeID)
-			return InventoryStorage[i];
+		if (Item->BlockType == BlockType)
+			return Item;
 	}
-	for (uint8 i = 0; i < InventoryStorage.Num(); i++)
+	for (URCInventoryItem* Item : InventoryStorage)
 	{
-		if (InventoryStorage[i]->BlockTypeID == AirBlockTypeID)
+		if (Item->BlockType == BlockTypesCount)
 		{
-			InventoryStorage[i]->BlockTypeID = BlockTypeID;
-			return InventoryStorage[i];
+			Item->BlockType = BlockType;
+			return Item;
 		}
 	}
 

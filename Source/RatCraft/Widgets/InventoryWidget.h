@@ -31,10 +31,10 @@ private:
 	TArray<class UItemWidget*> ItemWidgets;
 
 	UPROPERTY()
-	TMap<uint8 /*BlockTypeID*/, class UItemWidget*> PopulatedItemEntryWidgets;
+	TMap<TEnumAsByte<EBlockType>, class UItemWidget*> PopulatedItemEntryWidgets;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
-	TMap<EBlockType /*BlockTypeID*/, class URC_DataAssetBlockInventory*> InventoryItemsData;
+	TMap<TEnumAsByte<EBlockType>, class URC_DataAssetBlockInventory*> InventoryItemsData;
 
 	void ItemAdded(const class URCInventoryItem* InventoryItem);
 	void ItemRemove(const class URCInventoryItem* InventoryItem);

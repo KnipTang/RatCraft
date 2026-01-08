@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Containers/Map.h"
+#include "RatCraft/World/Blocks/RCBlockStatics.h"
 #include "RCInventory.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemAddedDelegate, const class URCInventoryItem* /*ItemToGrant*/)
@@ -23,16 +24,16 @@ public:
 
 	FOnUpdateSelectedSlotDelegate OnUpdateSelectedSlot;
 	
-	void AddItem(const uint8 BlockTypeID);
+	void AddItem(const EBlockType BlockType);
 	void RemoveItem();
 
 	void UpdateSelectedSlot(const int8 UpdateValue);
 
-	uint8 GetCurrentlyHoldingBlockTypeID();
+	EBlockType GetCurrentlyHoldingBlockType();
 	uint8 GetInventoryCapacity() const { return InventoryCapacity; }
 	
 private:
-	class URCInventoryItem* GetItem(const uint8 BlockTypeID);
+	class URCInventoryItem* GetItem(const EBlockType BlockType);
 	
 	UPROPERTY()
 	TArray<class URCInventoryItem*> InventoryStorage;
@@ -45,6 +46,4 @@ private:
 	uint8 CurrentlySelectedSlot = 0;
 
 	uint8 InvalidCount = 127;
-
-	uint8 AirBlockTypeID;
 };
