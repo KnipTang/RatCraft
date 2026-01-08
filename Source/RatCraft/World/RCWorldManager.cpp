@@ -5,6 +5,7 @@
 #include "RCWorldChunk.h"
 #include "RCWorldSettings.h"
 #include "Blocks/RCBlock.h"
+#include "Blocks/RCDataAssetBlock.h"
 #include "RatCraft/Abilities/RCAbilitySystemStatics.h"
 
 ARCWorldManager::ARCWorldManager()
@@ -18,6 +19,18 @@ void ARCWorldManager::BeginPlay()
 
 	WorldSettings = URCWorldSettings::GetSettings();
 	WorldSettings->Seed = FMath::RandRange(1, INT_MAX);
+	
+	FRandomStream RandomStream(WorldSettings->Seed);
+
+	FVector2D InSeedOffset = {
+		RandomStream.FRandRange(1.0f, 10000.0f),
+		RandomStream.FRandRange(1.0f, 10000.0f)
+	};
+
+	WorldSettings->SeedOffset = InSeedOffset;
+
+	//Fill in random
+	CurrentlyStandOnChunkCoords = FVector2D(-CHAR_MAX, CHAR_MIN);
 	
 	for (int8 x = -WorldSettings->InitChunksLoadedRange; x < WorldSettings->InitChunksLoadedRange; x++)
 	{
@@ -35,6 +48,17 @@ void ARCWorldManager::BeginPlay()
 		FRotator::ZeroRotator, 
 		SpawnParams
 	);
+}
+
+void ARCWorldManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(UpdateWorldRenderTimerHandle);
+		World->GetTimerManager().ClearTimer(BlockPlacedTimerHandle);
+	}
 }
 
 void ARCWorldManager::EnableChunkLoading(const FVector* PlayerGridCoords)
@@ -58,13 +82,18 @@ void ARCWorldManager::EnableChunkLoading(const FVector* PlayerGridCoords)
 
 void ARCWorldManager::HandleChunkLoading(const FVector* PlayerGridCoords)
 {
+	const FVector2D ChunkCoords = GetChunkCoordsFromWorldCoords(PlayerGridCoords->X, PlayerGridCoords->Y);
+	if (CurrentlyStandOnChunkCoords == ChunkCoords)
+		return;
+
 	for (ARCWorldChunk* Chunk : RenderedChunks)
 	{
 		Chunk->SetRender(false);
 	}
-
+	
 	RenderedChunks.Empty();
-	const FVector2D ChunkCoords = GetChunkCoordsFromWorldCoords(PlayerGridCoords->X, PlayerGridCoords->Y);
+	
+	CurrentlyStandOnChunkCoords = ChunkCoords;
 
 	int ChunkDistance = WorldSettings->RenderDistance / WorldSettings->ChunkSize;
 	ChunkDistance++;
@@ -80,24 +109,25 @@ void ARCWorldManager::HandleChunkLoading(const FVector* PlayerGridCoords)
 
 void ARCWorldManager::RenderChunk(const FVector2D& Coords)
 {
+	ARCWorldChunk* RenderedChunk;
 	if (!AllChunks.Contains(Coords))
 	{
-		AddChunk(Coords.X, Coords.Y);
+		RenderedChunk = AddChunk(Coords.X, Coords.Y);
 	}
-
-	ARCWorldChunk* RenderedChunk = AllChunks.FindChecked(Coords);
-
-	if (!RenderedChunks.Contains(RenderedChunk))
+	else
 	{
-		RenderedChunks.Emplace(RenderedChunk);
+		RenderedChunk = AllChunks.FindChecked(Coords);
 	}
+	
+	RenderedChunks.Emplace(RenderedChunk);
 	
 	RenderedChunk->SetRender(true);
 }
 
-void ARCWorldManager::AddChunk(int X, int Y)
+ARCWorldChunk* ARCWorldManager::AddChunk(const int X, const int Y)
 {
-	const FVector ChunkSpawnLocation = FVector( X * WorldSettings->GetWorldChunkSize(), Y * WorldSettings->GetWorldChunkSize(), 0);
+	const float WorldChunkSize = WorldSettings->GetWorldChunkSize();
+	const FVector ChunkSpawnLocation = FVector( X * WorldChunkSize, Y * WorldChunkSize, 0);
 	
 	ARCWorldChunk* NewChunk = GetWorld()->SpawnActor<ARCWorldChunk>(
 		ChunksClass, 
@@ -109,6 +139,8 @@ void ARCWorldManager::AddChunk(int X, int Y)
 	NewChunk->Init(this);
 	
 	AllChunks.Emplace(FVector2D(X, Y) ,NewChunk);
+
+	return NewChunk;
 }
 
 void ARCWorldManager::Mining(const bool bIsPressed)
@@ -143,12 +175,15 @@ bool ARCWorldManager::SpawnBlock(const FVector& PlayerGridCoords, const float Co
 	
 	FVector2D ChunkCoords = GetChunkCoordsFromWorldCoords(Coords.X, Coords.Y);
 
+	ARCWorldChunk* FoundChunk;
 	if (!AllChunks.Contains(ChunkCoords))
 	{
-		AddChunk(ChunkCoords.X, ChunkCoords.Y);	
+		 FoundChunk = AddChunk(ChunkCoords.X, ChunkCoords.Y);	
 	}
-	
-	ARCWorldChunk* FoundChunk = AllChunks.FindChecked(ChunkCoords);
+	else
+	{
+		FoundChunk = AllChunks.FindChecked(ChunkCoords);
+	}
 
 	const bool bSucceeded = FoundChunk->SpawnBlock(EBlockType::Dirt, Coords);
 
@@ -296,4 +331,16 @@ URCDataAssetBlock* ARCWorldManager::GetDataAssetBlockFromType(const EBlockType B
 	if (BlockDataAsset.Contains(BlockType))
 		return BlockDataAsset.FindChecked(BlockType);
 	return nullptr;
+}
+
+UMaterialInterface* ARCWorldManager::GetMaterialFromTypeID(const uint8 BlockTypeID)
+{
+	if (!BlockTypeMaterials.Contains(BlockTypeID))
+	{
+		UMaterialInterface* Material = GetDataAssetBlockFromType(static_cast<EBlockType>(BlockTypeID))->GetMaterial();
+		BlockTypeMaterials.Emplace(BlockTypeID, Material);
+		return Material;
+	}
+
+	return BlockTypeMaterials.FindChecked(BlockTypeID);
 }

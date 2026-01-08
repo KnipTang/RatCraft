@@ -43,12 +43,19 @@ public:
 	
 	bool SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector& GridCoords);
 
+protected:
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	
 private:
 	void InitChunkBlockData();
 	
 	void RenderChunk();
-	void GenerateBlockFaces(const FVector& Coords);
+	void GenerateBlockFaces(const FVector& BlockCoords);
+	void UpdateChunk(const FVector& BlockCoords);
+	void UpdateBlockFaces(const FVector& BlockCoords);
 
+	void CreateProceduralMesh();
+	
 	bool UpdateChunkBlocksDataAtBlockCoords(const EBlockType BlockTypeToSpawn, const FVector& BlockCoords);
 	void CheckIfChunkBorderCubeGotUpdated(const EBlockType UpdatedBlockType, const FVector& Coords) const;
 	
@@ -94,10 +101,9 @@ private:
 	FVector2D ChunkGridCoords;
 	
 	//Mining
-	FTimerHandle MiningTimerHandle;
-
 	UPROPERTY(EditDefaultsOnly, Category = "Setting")
 	float MiningUpdateInterval = 0.1f;
+	FTimerHandle MiningTimerHandle;
 	
 	float CurrentMinedTime;
 	bool bIsMining;

@@ -42,4 +42,5 @@ public:
 	uint8 InitChunksLoadedRange = 10;
 	
 	mutable int Seed = 1;
+	mutable FVector2D SeedOffset;
 };

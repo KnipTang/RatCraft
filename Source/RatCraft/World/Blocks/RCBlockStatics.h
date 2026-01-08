@@ -46,7 +46,7 @@ public:
 
 static EBlockType GetBlockTypeFromHeight(const URCWorldSettings* WorldSettings, const int TerrainHeight, const int BlockHeight)
 {
-	const int RandomOffset = FMath::RandRange(0, 2);
+	const int RandomOffset = 0;
 
 	const int ChunkHeight = WorldSettings->ChunkHeight;
 	const int RockLevel = WorldSettings->RockLevel;

@@ -30,12 +30,13 @@ public:
 
 	class ARCWorldChunk* GetChunkAtWorldCoords(const int X, const int Y);
 	class URCDataAssetBlock* GetDataAssetBlockFromType(EBlockType BlockType) const;
+	UMaterialInterface* GetMaterialFromTypeID(const uint8 BlockTypeID);
 protected:
 	virtual void BeginPlay() override;
-	
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 private:
 	void RenderChunk(const FVector2D& Coords);
-	void AddChunk(int X, int Y);
+	ARCWorldChunk* AddChunk(int X, int Y);
 	
 	void HandleChunkLoading(const FVector* PlayerGridCoords);
 
@@ -44,6 +45,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Blocks")
 	TMap<EBlockType, class URCDataAssetBlock*> BlockDataAsset;
+	
+	UPROPERTY()
+	TMap<uint8 /*BlockTypeID*/, UMaterialInterface*> BlockTypeMaterials;
 	
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class ARCWorldChunk> ChunksClass;
@@ -67,6 +71,8 @@ private:
 	
 	UPROPERTY()
 	class ARCWorldChunk* CurrentlyLookAtChunk;
+	UPROPERTY()
+	FVector2D CurrentlyStandOnChunkCoords;
 	bool bIsLookingAtChunk;
 	FVector LookAtBlockNormal;
 	FVector LookAtBlockCoords;

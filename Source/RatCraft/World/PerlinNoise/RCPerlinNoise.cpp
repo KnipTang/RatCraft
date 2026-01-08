@@ -2,18 +2,13 @@
 
 
 #include "RCPerlinNoise.h"
-#pragma optimize("", off)
-TArray<float> URCPerlinNoise::GenerateHeightMap(int32 Width, int32 Height, float Scale, FVector2D Offset, int Seed)
+
+TArray<float> URCPerlinNoise::GenerateHeightMap(int32 Width, int32 Height, float Scale, FVector2D Offset, FVector2D SeedOffset)
 {
 	TArray<float> HeightMap;
 	HeightMap.SetNum(Width * Height);
 
-	FRandomStream RandomStream(Seed);
-    
-	FVector2D SeedOffset(
-		RandomStream.FRandRange(0.0f, 10000.0f),
-		RandomStream.FRandRange(0.0f, 10000.0f)
-	);
+	//Uninitialised
 
 	Offset+=SeedOffset;
 	

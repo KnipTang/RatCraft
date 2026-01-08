@@ -8,7 +8,7 @@
 #include "Blocks/RCBlockStatics.h"
 #include "Blocks/RCDataAssetBlock.h"
 #include "PerlinNoise/RCPerlinNoise.h"
-
+//#pragma optimize("", off)
 // Sets default values
 ARCWorldChunk::ARCWorldChunk()
 {
@@ -35,7 +35,7 @@ void ARCWorldChunk::Init(ARCWorldManager* InWorldManager)
 	{
 		if (WorldManager)
 		{
-			UMaterialInterface* Material = WorldManager->GetDataAssetBlockFromType(static_cast<EBlockType>(i))->GetMaterial();
+			UMaterialInterface* Material = WorldManager->GetMaterialFromTypeID(i);
 			ProceduralMesh->SetMaterial(i, Material);
 		}
 	}
@@ -89,10 +89,10 @@ void ARCWorldChunk::InitChunkBlockData()
 			float NoiseHeight = GetNoiseHeightAt(X + 1, Z + 1);
 			NoiseHeight = FMath::Clamp(NoiseHeight, 0.4f, 1.f);
 			int TerrainHeight = FMath::RoundToInt(NoiseHeight * WorldSettings->ChunkHeight);
-			for (int Y = 0; Y < WorldSettings->ChunkHeight; Y++)
+			for (uint8 Y = 0; Y < WorldSettings->ChunkHeight; Y++)
 			{
 				const FVector Coords = FVector(X, Z, Y);
-				ChunkBlocksData.Add(Coords, GetBlockTypeFromHeight(WorldSettings, TerrainHeight, Y));
+				ChunkBlocksData.Emplace(Coords, GetBlockTypeFromHeight(WorldSettings, TerrainHeight, Y));
 			}
 		}
 	}
@@ -113,19 +113,13 @@ void ARCWorldChunk::RenderChunk()
 		GenerateBlockFaces(BlockData.Key);
 	}
 	
-	ProceduralMesh->ClearAllMeshSections();
-	for (uint8 i = 0; i < ChunkMeshes.Num(); i++)
-	{
-		if (ChunkMeshes[i].Vertices.Num() > 0)
-		{
-			ProceduralMesh->CreateMeshSection(i, ChunkMeshes[i].Vertices, ChunkMeshes[i].Triangles, ChunkMeshes[i].Normals, ChunkMeshes[i].UVs, ChunkMeshes[i].VertexColors, ChunkMeshes[i].Tangents, true);
-		}
-	}
+	CreateProceduralMesh();
 }
 
-void ARCWorldChunk::GenerateBlockFaces(const FVector& Coords)
+void ARCWorldChunk::GenerateBlockFaces(const FVector& BlockCoords)
 {
-	EBlockType BlockType = ChunkBlocksData[Coords];
+	EBlockType BlockType = ChunkBlocksData[BlockCoords];
+	
 	const uint8 MaterialIndex = static_cast<int32>(BlockType);
 	
 	TArray<FVector>& Vertices = ChunkMeshes[MaterialIndex].Vertices;
@@ -134,7 +128,7 @@ void ARCWorldChunk::GenerateBlockFaces(const FVector& Coords)
 	TArray<FVector2D>& UVs = ChunkMeshes[MaterialIndex].UVs;
 	TArray<FColor>& VertexColors = ChunkMeshes[MaterialIndex].VertexColors;
 
-	const TArray<bool> BlockFaceVisibility = GetBlockFaceVisibilityFromCoords(Coords);
+	const TArray<bool> BlockFaceVisibility = GetBlockFaceVisibilityFromCoords(BlockCoords);
 
 	for (int32 FaceIndex = 0; FaceIndex < Faces.Num(); FaceIndex++)
 	{
@@ -147,7 +141,7 @@ void ARCWorldChunk::GenerateBlockFaces(const FVector& Coords)
 
 		for (int32 i = 0; i < 4; i++)
 		{
-			Vertices.Add(GetCubeVertices(WorldSettings->GetHalfBlockSize())[Face[i]] + (Coords * WorldSettings->BlockSize) + WorldSettings->GetHalfBlockSize());
+			Vertices.Add(GetCubeVertices(WorldSettings->GetHalfBlockSize())[Face[i]] + (BlockCoords * WorldSettings->BlockSize) + WorldSettings->GetHalfBlockSize());
         	
 			if (i == 0) UVs.Add(FVector2D(0, 1));
 			else if (i == 1) UVs.Add(FVector2D(1, 1));
@@ -168,11 +162,50 @@ void ARCWorldChunk::GenerateBlockFaces(const FVector& Coords)
 	}
 }
 
+void ARCWorldChunk::UpdateChunk(const FVector& BlockCoords)
+{
+	UpdateBlockFaces(BlockCoords);
+	UpdateBlockFaces(FVector(BlockCoords.X, BlockCoords.Y - 1, BlockCoords.Z));
+	UpdateBlockFaces(FVector(BlockCoords.X, BlockCoords.Y + 1, BlockCoords.Z));
+	UpdateBlockFaces(FVector(BlockCoords.X - 1, BlockCoords.Y, BlockCoords.Z));
+	UpdateBlockFaces(FVector(BlockCoords.X + 1, BlockCoords.Y, BlockCoords.Z));
+	UpdateBlockFaces(FVector(BlockCoords.X, BlockCoords.Y, BlockCoords.Z + 1));
+	UpdateBlockFaces(FVector(BlockCoords.X, BlockCoords.Y, BlockCoords.Z - 1));
+	
+	CreateProceduralMesh();
+}
+
+void ARCWorldChunk::UpdateBlockFaces(const FVector& BlockCoords)
+{
+	EBlockType BlockType = ChunkBlocksData[BlockCoords];
+	if (BlockType == EBlockType::Air)
+	{
+		GenerateBlockFaces(BlockCoords);
+		return;
+	}
+
+	
+}
+
+
+
+void ARCWorldChunk::CreateProceduralMesh()
+{
+	ProceduralMesh->ClearAllMeshSections();
+	for (uint8 i = 0; i < ChunkMeshes.Num(); i++)
+	{
+		if (ChunkMeshes[i].Vertices.Num() > 0)
+		{
+			ProceduralMesh->CreateMeshSection(i, ChunkMeshes[i].Vertices, ChunkMeshes[i].Triangles, ChunkMeshes[i].Normals, ChunkMeshes[i].UVs, ChunkMeshes[i].VertexColors, ChunkMeshes[i].Tangents, true);
+		}
+	}
+}
+
 bool ARCWorldChunk::UpdateChunkBlocksDataAtBlockCoords(const EBlockType BlockTypeToSpawn, const FVector& BlockCoords)
 {
 	if (!ChunkBlocksData.Contains(BlockCoords))
 		return false;
-
+	
 	ChunkBlocksData.FindChecked(BlockCoords) = BlockTypeToSpawn;
 
 	RenderChunk();
@@ -188,6 +221,16 @@ bool ARCWorldChunk::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector&
 	CheckIfChunkBorderCubeGotUpdated(BlockTypeToSpawn, LocalGridCoords);
 	
 	return true;
+}
+
+void ARCWorldChunk::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(MiningTimerHandle);
+	}
 }
 
 void ARCWorldChunk::StartMining()
@@ -237,8 +280,6 @@ void ARCWorldChunk::UpdateMiningProgress()
 {
 	CurrentMinedTime += MiningUpdateInterval;
 
-	UE_LOG(LogTemp, Warning, TEXT("%f"), CurrentMinedTime);
-
 	if (CurrentMinedTime >= CurrentMiningBlockData->GetMineTime())
 	{
 		OnBlockMined();
@@ -260,7 +301,7 @@ void ARCWorldChunk::CheckIfChunkBorderCubeGotUpdated(const EBlockType UpdatedBlo
 	{
 		const int NewCoordX = FMath::Clamp(Coords.X - 1, -1, 1);
 		
-		ARCWorldChunk* NextToChunk = WorldManager->GetChunkAtWorldCoords(ChunkWorldCoords.X + WorldSettings->ChunkSize * NewCoordX, ChunkGridCoords.Y);
+		ARCWorldChunk* NextToChunk = WorldManager->GetChunkAtWorldCoords(ChunkWorldCoords.X + WorldSettings->ChunkSize * NewCoordX, ChunkWorldCoords.Y);
 		
 		const int BlockNewCoords = WorldSettings->ChunkSize - (Coords.X + (NewCoordX + 1));
 		NextToChunk->UpdateChunkBlocksDataAtBlockCoords(UpdatedBlockType, FVector(BlockNewCoords, Coords.Y, Coords.Z));
@@ -269,7 +310,7 @@ void ARCWorldChunk::CheckIfChunkBorderCubeGotUpdated(const EBlockType UpdatedBlo
 	{
 		const int NewCoordY = FMath::Clamp(Coords.Y - 1, -1, 1);
 		
-		ARCWorldChunk* NextToChunk = WorldManager->GetChunkAtWorldCoords(ChunkWorldCoords.X, ChunkGridCoords.Y + WorldSettings->ChunkSize * NewCoordY);
+		ARCWorldChunk* NextToChunk = WorldManager->GetChunkAtWorldCoords(ChunkWorldCoords.X, ChunkWorldCoords.Y + WorldSettings->ChunkSize * NewCoordY);
 
 		const int BlockNewCoords = WorldSettings->ChunkSize - (Coords.Y + (NewCoordY + 1));
 		NextToChunk->UpdateChunkBlocksDataAtBlockCoords(UpdatedBlockType, FVector(Coords.X, BlockNewCoords, Coords.Z));
@@ -292,7 +333,14 @@ void ARCWorldChunk::SetCurrentlyLookAtBlock(const FVector& Coords)
 /***************************************************/
 TArray<float> ARCWorldChunk::GeneratePerlinNoise() const
 {
-	return URCPerlinNoise::GenerateHeightMap(WorldSettings->ChunkSize + 2, WorldSettings->ChunkSize + 2, WorldSettings->PerlinNoiseScale, FVector2D(ChunkWorldCoords.X - (1.f/WorldSettings->ChunkSize), ChunkWorldCoords.Y - (1.f/WorldSettings->ChunkSize)), WorldSettings->Seed);
+	return URCPerlinNoise::GenerateHeightMap(
+		WorldSettings->ChunkSize + 2,
+		WorldSettings->ChunkSize + 2,
+		WorldSettings->PerlinNoiseScale,
+		FVector2D(ChunkWorldCoords.X - (1.f/WorldSettings->ChunkSize),
+		ChunkWorldCoords.Y - (1.f/WorldSettings->ChunkSize)),
+		WorldSettings->SeedOffset
+		);
 }
 
 float ARCWorldChunk::GetNoiseHeightAt(int X, int Z)
