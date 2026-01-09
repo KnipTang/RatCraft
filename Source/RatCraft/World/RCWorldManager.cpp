@@ -20,7 +20,7 @@ void ARCWorldManager::BeginPlay()
 	Super::BeginPlay();
 
 	WorldSettings = URCWorldSettings::GetSettings();
-	WorldSettings->Seed = FMath::RandRange(1, MAX_uint32);
+	WorldSettings->Seed = FMath::RandRange(1, MAX_int32);
 	
 	FRandomStream RandomStream(WorldSettings->Seed);
 

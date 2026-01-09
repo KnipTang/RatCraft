@@ -23,14 +23,14 @@ public:
 	UPROPERTY(Config, EditDefaultsOnly)
 	uint8 ChunkSize = 16;
 	UPROPERTY(Config, EditDefaultsOnly)
-	uint8 ChunkHeight = 50;
+	uint8 ChunkHeight = 20;
 	UPROPERTY(Config, EditDefaultsOnly)
 	float PerlinNoiseScale = 0.1f;
 
 	UPROPERTY(Config, EditDefaultsOnly)
-	uint8 SnowLevel = 50;
+	uint8 SnowLevel = 5;
 	UPROPERTY(Config, EditDefaultsOnly)
-	uint8 RockLevel = 5;
+	uint8 RockLevel = 3;
 
 	UPROPERTY(Config, EditDefaultsOnly)
 	uint8 BlockSize = 100;
@@ -39,7 +39,7 @@ public:
 	uint8 RenderDistance = 16;
 
 	UPROPERTY(Config, EditDefaultsOnly)
-	uint8 InitChunksLoadedRange = 10;
+	uint8 InitChunksLoadedRange = 5;
 	
 	mutable uint32 Seed = 1;
 	mutable FVector2D SeedOffset;
