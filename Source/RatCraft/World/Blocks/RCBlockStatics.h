@@ -30,26 +30,6 @@ FORCEINLINE TEnum ToTEnum(uint8 Value)
 
 static uint8 BlockTypesCount = ToUInt8(EBlockType::Air);
 
-static EBlockType GetBlockTypeFromHeight(const URCWorldSettings& WorldSettings, const int TerrainHeight, const int BlockHeight)
-{
-	const int ChunkHeight = WorldSettings.ChunkHeight;
-	const int RockLevel = WorldSettings.RockLevel;
-	const int SnowLevel = WorldSettings.SnowLevel;
-	
-	if (BlockHeight > TerrainHeight)
-		return EBlockType::Air;
-	else if (BlockHeight == TerrainHeight && BlockHeight < ChunkHeight - (SnowLevel))
-		return EBlockType::Grass;
-	else if (BlockHeight >= TerrainHeight - (RockLevel) && BlockHeight < ChunkHeight - (SnowLevel))
-		return EBlockType::Dirt;
-	else if (BlockHeight <= TerrainHeight - (RockLevel))
-		return EBlockType::Stone;
-	else if (BlockHeight >= ChunkHeight - (SnowLevel))
-		return EBlockType::Snow;
-	
-	return EBlockType::Air;
-}
-
 static TArray<TArray<uint8>> Faces = {
 	{3, 2, 1, 0}, // South
 	{6, 7, 4, 5}, // North

@@ -48,9 +48,9 @@ protected:
 	
 private:
 	void InitChunkBlockData();
-	
+
 	void RenderChunk();
-	void GenerateBlockFaces(const FVector& BlockCoords);
+	void GenerateBlockFaces(const EBlockType& BlockType, const FVector& BlockCoords);
 	
 	void CreateProceduralMesh();
 	
@@ -66,6 +66,9 @@ private:
 	void LookAtBlockChanged();
 	
 	//GETTERS
+	int32 GetBlockIndex(int8 X, int8 Y, int8 Z) const;
+	EBlockType GetBlockType(int8 X, int8 Y, int8 Z) const;
+	
 	uint8 GetNoiseHeightAt(int X, int Z);
 	TArray<float> GeneratePerlinNoise() const;
 	
@@ -73,6 +76,8 @@ private:
 	FVector GetLocalGridCoords(const FVector& GridCoords) const;
 
 	bool IsBlockAtCoords(const FVector& Coords) const;
+
+	EBlockType GetBlockTypeFromHeight(const int TerrainHeight, const int BlockHeight) const;
 
 private:
 	UPROPERTY()
@@ -87,7 +92,7 @@ private:
 	bool bIsRendered = true;
 	bool bIsCollision = true;
 	
-	TMap<FVector /*Coords*/, EBlockType> ChunkBlocksData;
+	TArray<EBlockType> ChunkBlocksData;
 	TArray<FChunkMesh> ChunkMeshes;
 
 	FVector LookAtBlockCoords;
@@ -104,4 +109,12 @@ private:
 	
 	float CurrentMinedTime;
 	bool bIsMining;
+
+	//Cached values
+	uint8 ChunkSize;
+	uint8 ChunkSizeWithBorder;
+	uint8 ChunkHeight;
+	int32 TotalBlocks;
+	uint8 RockLevel;
+	uint8 SnowLevel;
 };
