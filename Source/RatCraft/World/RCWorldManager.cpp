@@ -20,7 +20,7 @@ void ARCWorldManager::BeginPlay()
 	Super::BeginPlay();
 
 	WorldSettings = URCWorldSettings::GetSettings();
-	WorldSettings->Seed = FMath::RandRange(1, INT_MAX);
+	WorldSettings->Seed = FMath::RandRange(1, MAX_uint32);
 	
 	FRandomStream RandomStream(WorldSettings->Seed);
 
@@ -101,7 +101,7 @@ void ARCWorldManager::HandleChunkLoading(const FVector* PlayerGridCoords)
 	{
 		if (!NewRenderSet.Contains(*It))
 		{
-			if (!AllChunks.Contains(*It))
+			if (AllChunks.Contains(*It))
 			{
 				AllChunks[*It]->SetRender(false);
 			}

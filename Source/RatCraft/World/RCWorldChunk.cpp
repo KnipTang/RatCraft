@@ -274,20 +274,20 @@ void ARCWorldChunk::CheckIfChunkBorderCubeGotUpdated(const EBlockType UpdatedBlo
 {
 	if (X == 0 || X == ChunkSize - 1)
 	{
-		const int NewCoordX = FMath::Clamp(X - 1, -1, 1);
+		const int8 NewCoordX = FMath::Clamp(X - 1, -1, 1);
 		
 		ARCWorldChunk* NextToChunk = WorldManager->GetChunkAtWorldCoords(ChunkWorldCoords.X + ChunkSize * NewCoordX, ChunkWorldCoords.Y);
 		
-		const int BlockNewCoords = ChunkSize - (X + (NewCoordX + 1));
+		const int8 BlockNewCoords = ChunkSize - (X + (NewCoordX + 1));
 		NextToChunk->UpdateChunkBlocksDataAtBlockCoords(UpdatedBlockType, FVector(BlockNewCoords, Y, Z));
 	}
 	if (Y == 0 || Y == ChunkSize - 1)
 	{
-		const int NewCoordY = FMath::Clamp(Y - 1, -1, 1);
+		const int8 NewCoordY = FMath::Clamp(Y - 1, -1, 1);
 		
 		ARCWorldChunk* NextToChunk = WorldManager->GetChunkAtWorldCoords(ChunkWorldCoords.X, ChunkWorldCoords.Y + ChunkSize * NewCoordY);
 
-		const int BlockNewCoords = ChunkSize - (Y + (NewCoordY + 1));
+		const int8 BlockNewCoords = ChunkSize - (Y + (NewCoordY + 1));
 		NextToChunk->UpdateChunkBlocksDataAtBlockCoords(UpdatedBlockType, FVector(X, BlockNewCoords, Z));
 	}
 }

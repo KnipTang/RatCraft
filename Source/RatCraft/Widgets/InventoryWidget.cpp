@@ -26,7 +26,7 @@ void UInventoryWidget::NativeConstruct()
 
 			ItemsContainer->ClearChildren();
 
-			for (int i = 0; i < Capacity; ++i)
+			for (uint8 i = 0; i < Capacity; ++i)
 			{
 				if (UItemWidget* NewEmptyWidget = CreateWidget<UItemWidget>(GetOwningPlayer(), ItemWidgetClass))
 				{

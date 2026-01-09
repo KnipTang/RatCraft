@@ -41,6 +41,6 @@ public:
 	UPROPERTY(Config, EditDefaultsOnly)
 	uint8 InitChunksLoadedRange = 10;
 	
-	mutable int Seed = 1;
+	mutable uint32 Seed = 1;
 	mutable FVector2D SeedOffset;
 };
