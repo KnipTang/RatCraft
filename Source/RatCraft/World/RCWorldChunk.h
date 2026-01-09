@@ -55,7 +55,7 @@ private:
 	void CreateProceduralMesh();
 	
 	bool UpdateChunkBlocksDataAtBlockCoords(const EBlockType BlockTypeToSpawn, const FVector& BlockCoords);
-	void CheckIfChunkBorderCubeGotUpdated(const EBlockType UpdatedBlockType, const FVector& Coords) const;
+	void CheckIfChunkBorderCubeGotUpdated(const EBlockType UpdatedBlockType, const int8 X, const int8 Y, const int8 Z) const;
 	
 	//MINING
 	void OnBlockMined();
@@ -69,15 +69,15 @@ private:
 	int32 GetBlockIndex(int8 X, int8 Y, int8 Z) const;
 	EBlockType GetBlockType(int8 X, int8 Y, int8 Z) const;
 	
-	uint8 GetNoiseHeightAt(int X, int Z);
+	uint8 GetNoiseHeightAt(int8 X, int8 Z);
 	TArray<float> GeneratePerlinNoise() const;
 	
 	TArray<bool> GetBlockFaceVisibilityFromCoords(const FVector& Coords) const;
 	FVector GetLocalGridCoords(const FVector& GridCoords) const;
 
-	bool IsBlockAtCoords(const FVector& Coords) const;
+	bool IsBlockAtCoords(const int8 X, const int8 Y, const int8 Z) const;
 
-	EBlockType GetBlockTypeFromHeight(const int TerrainHeight, const int BlockHeight) const;
+	EBlockType GetBlockTypeFromHeight(const int8 TerrainHeight, const int8 BlockHeight) const;
 
 private:
 	UPROPERTY()
@@ -111,10 +111,12 @@ private:
 	bool bIsMining;
 
 	//Cached values
+	int32 TotalBlocks;
 	uint8 ChunkSize;
 	uint8 ChunkSizeWithBorder;
 	uint8 ChunkHeight;
-	int32 TotalBlocks;
+	uint8 BlockSize;
+	float HalfBlockSize;
 	uint8 RockLevel;
 	uint8 SnowLevel;
 };

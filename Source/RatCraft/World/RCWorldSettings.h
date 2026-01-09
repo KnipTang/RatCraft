@@ -28,12 +28,12 @@ public:
 	float PerlinNoiseScale = 0.1f;
 
 	UPROPERTY(Config, EditDefaultsOnly)
-	uint8 SnowLevel = 50.f;
+	uint8 SnowLevel = 50;
 	UPROPERTY(Config, EditDefaultsOnly)
-	uint8 RockLevel = 5.f;
+	uint8 RockLevel = 5;
 
 	UPROPERTY(Config, EditDefaultsOnly)
-	float BlockSize = 100.f;
+	uint8 BlockSize = 100;
 	
 	UPROPERTY(Config, EditDefaultsOnly)
 	uint8 RenderDistance = 16;

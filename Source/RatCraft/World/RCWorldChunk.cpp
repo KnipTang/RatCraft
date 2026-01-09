@@ -25,16 +25,18 @@ void ARCWorldChunk::Init(ARCWorldManager* InWorldManager)
 	WorldManager = InWorldManager;
 	WorldSettings = URCWorldSettings::GetSettings();
 
+	TotalBlocks = ChunkSize * ChunkSize * WorldSettings->ChunkHeight;
 	ChunkSize = WorldSettings->ChunkSize;
 	ChunkSizeWithBorder = WorldSettings->ChunkSize + 2;
 	ChunkHeight = WorldSettings->ChunkHeight;
-	TotalBlocks = ChunkSize * ChunkSize * WorldSettings->ChunkHeight;
+	BlockSize = WorldSettings->BlockSize;
+	HalfBlockSize = WorldSettings->GetHalfBlockSize();
 	RockLevel = WorldSettings->RockLevel;
 	SnowLevel = WorldSettings->SnowLevel;
 
 	SetRender(false);
 
-	ChunkWorldCoords = GetActorLocation() / WorldSettings->BlockSize;
+	ChunkWorldCoords = GetActorLocation() / BlockSize;
 	ChunkGridCoords = FVector2D( ChunkWorldCoords / ChunkSize);
 
 	for (uint8 i = 0; i < BlockTypesCount; i++)
@@ -78,7 +80,7 @@ void ARCWorldChunk::SetCollision(const bool bCollision)
 
 void ARCWorldChunk::InitChunkBlockData()
 {
-	const uint32 TotalBlocksWithBorder = ChunkSizeWithBorder * ChunkSizeWithBorder * WorldSettings->ChunkHeight;
+	const uint32 TotalBlocksWithBorder = ChunkSizeWithBorder * ChunkSizeWithBorder * ChunkHeight;
 	
 	ChunkBlocksData.Empty(TotalBlocksWithBorder);
 	ChunkBlocksData.SetNum(TotalBlocksWithBorder);
@@ -88,7 +90,7 @@ void ARCWorldChunk::InitChunkBlockData()
 		for (int8 Z = -1; Z < ChunkSize + 1; Z++)
 		{
 			const uint8 TerrainHeight = GetNoiseHeightAt(X + 1, Z + 1);
-			for (uint8 Y = 0; Y < WorldSettings->ChunkHeight; Y++)
+			for (uint8 Y = 0; Y < ChunkHeight; Y++)
 			{
 				const EBlockType BlockType = GetBlockTypeFromHeight(TerrainHeight, Y);
 				const int32 Index = GetBlockIndex(X, Z, Y);
@@ -154,7 +156,7 @@ void ARCWorldChunk::GenerateBlockFaces(const EBlockType& BlockType, const FVecto
 
 		for (uint8 i = 0; i < 4; i++)
 		{
-			Vertices.Add(GetCubeVertices(WorldSettings->GetHalfBlockSize())[Face[i]] + (BlockCoords * WorldSettings->BlockSize) + WorldSettings->GetHalfBlockSize());
+			Vertices.Add(GetCubeVertices(HalfBlockSize)[Face[i]] + (BlockCoords * BlockSize) + HalfBlockSize);
         	
 			if (i == 0) UVs.Add(FVector2D(0, 1));
 			else if (i == 1) UVs.Add(FVector2D(1, 1));
@@ -202,7 +204,7 @@ bool ARCWorldChunk::SpawnBlock(const EBlockType BlockTypeToSpawn, const FVector&
 	const FVector LocalGridCoords = GetLocalGridCoords(GridCoords);
 
 	UpdateChunkBlocksDataAtBlockCoords(BlockTypeToSpawn, LocalGridCoords);
-	CheckIfChunkBorderCubeGotUpdated(BlockTypeToSpawn, LocalGridCoords);
+	CheckIfChunkBorderCubeGotUpdated(BlockTypeToSpawn, LocalGridCoords.X, LocalGridCoords.Y, LocalGridCoords.Z);
 	
 	return true;
 }
@@ -256,7 +258,7 @@ void ARCWorldChunk::OnBlockMined()
 	WorldManager->OnBlockMined(Type);
 	StopMining();
 	UpdateChunkBlocksDataAtBlockCoords(EBlockType::Air, LookAtBlockCoords);
-	CheckIfChunkBorderCubeGotUpdated(EBlockType::Air, LookAtBlockCoords);
+	CheckIfChunkBorderCubeGotUpdated(EBlockType::Air, LookAtBlockCoords.X, LookAtBlockCoords.Y, LookAtBlockCoords.Z);
 }
 
 void ARCWorldChunk::UpdateMiningProgress()
@@ -278,25 +280,25 @@ void ARCWorldChunk::LookAtBlockChanged()
 }
 
 
-void ARCWorldChunk::CheckIfChunkBorderCubeGotUpdated(const EBlockType UpdatedBlockType, const FVector& Coords) const
+void ARCWorldChunk::CheckIfChunkBorderCubeGotUpdated(const EBlockType UpdatedBlockType, const int8 X, const int8 Y, const int8 Z) const
 {
-	if (Coords.X == 0 || Coords.X == ChunkSize - 1)
+	if (X == 0 || X == ChunkSize - 1)
 	{
-		const int NewCoordX = FMath::Clamp(Coords.X - 1, -1, 1);
+		const int NewCoordX = FMath::Clamp(X - 1, -1, 1);
 		
 		ARCWorldChunk* NextToChunk = WorldManager->GetChunkAtWorldCoords(ChunkWorldCoords.X + ChunkSize * NewCoordX, ChunkWorldCoords.Y);
 		
-		const int BlockNewCoords = ChunkSize - (Coords.X + (NewCoordX + 1));
-		NextToChunk->UpdateChunkBlocksDataAtBlockCoords(UpdatedBlockType, FVector(BlockNewCoords, Coords.Y, Coords.Z));
+		const int BlockNewCoords = ChunkSize - (X + (NewCoordX + 1));
+		NextToChunk->UpdateChunkBlocksDataAtBlockCoords(UpdatedBlockType, FVector(BlockNewCoords, Y, Z));
 	}
-	if (Coords.Y == 0 || Coords.Y == ChunkSize - 1)
+	if (Y == 0 || Y == ChunkSize - 1)
 	{
-		const int NewCoordY = FMath::Clamp(Coords.Y - 1, -1, 1);
+		const int NewCoordY = FMath::Clamp(Y - 1, -1, 1);
 		
 		ARCWorldChunk* NextToChunk = WorldManager->GetChunkAtWorldCoords(ChunkWorldCoords.X, ChunkWorldCoords.Y + ChunkSize * NewCoordY);
 
-		const int BlockNewCoords = ChunkSize - (Coords.Y + (NewCoordY + 1));
-		NextToChunk->UpdateChunkBlocksDataAtBlockCoords(UpdatedBlockType, FVector(Coords.X, BlockNewCoords, Coords.Z));
+		const int BlockNewCoords = ChunkSize - (Y + (NewCoordY + 1));
+		NextToChunk->UpdateChunkBlocksDataAtBlockCoords(UpdatedBlockType, FVector(X, BlockNewCoords, Z));
 	}
 }
 
@@ -330,8 +332,8 @@ EBlockType ARCWorldChunk::GetBlockType(int8 X, int8 Y, int8 Z) const
 TArray<float> ARCWorldChunk::GeneratePerlinNoise() const
 {
 	return URCPerlinNoise::GenerateHeightMap(
-		ChunkSize + 2,
-		ChunkSize + 2,
+		ChunkSizeWithBorder,
+		ChunkSizeWithBorder,
 		WorldSettings->PerlinNoiseScale,
 		FVector2D(ChunkWorldCoords.X - (1.f/ChunkSize),
 		ChunkWorldCoords.Y - (1.f/ChunkSize)),
@@ -339,36 +341,24 @@ TArray<float> ARCWorldChunk::GeneratePerlinNoise() const
 		);
 }
 
-uint8 ARCWorldChunk::GetNoiseHeightAt(int X, int Z)
+uint8 ARCWorldChunk::GetNoiseHeightAt(int8 X, int8 Z)
 {
 	if (PerlinNoise.Num() == 0)
 		return 0;
 	
-	const int NoiseIndex = X + Z * (ChunkSize + 2);
+	const int NoiseIndex = X + Z * (ChunkSizeWithBorder);
 	
 	if (NoiseIndex >= 0 && NoiseIndex < PerlinNoise.Num())
 	{
 		float NoiseHeight = PerlinNoise[NoiseIndex];
-		const uint8 Height = NoiseHeight * WorldSettings->ChunkHeight;
+		const uint8 Height = NoiseHeight * ChunkHeight;
 		return Height;
 	}
     
 	return 0;
 }
 
-bool ARCWorldChunk::IsBlockAtCoords(const FVector& Coords) const
-{
-	if (Coords.Z == -1)
-		return true;
-	
-	const EBlockType Type = GetBlockType(Coords.X, Coords.Y, Coords.Z);
-	
-	if (Type == EBlockType::Air)
-		return false;
-	return true;
-}
-
-EBlockType ARCWorldChunk::GetBlockTypeFromHeight(const int TerrainHeight, const int BlockHeight) const
+EBlockType ARCWorldChunk::GetBlockTypeFromHeight(const int8 TerrainHeight, const int8 BlockHeight) const
 {	
 	if (BlockHeight > TerrainHeight)
 		return EBlockType::Air;
@@ -384,17 +374,34 @@ EBlockType ARCWorldChunk::GetBlockTypeFromHeight(const int TerrainHeight, const 
 	return EBlockType::Air;
 }
 
+bool ARCWorldChunk::IsBlockAtCoords(const int8 X, const int8 Y, const int8 Z) const
+{
+	if (Z == -1)
+		return true;
+	
+	const EBlockType Type = GetBlockType(X, Y, Z);
+	
+	if (Type == EBlockType::Air)
+		return false;
+	return true;
+}
+
 TArray<bool> ARCWorldChunk::GetBlockFaceVisibilityFromCoords(const FVector& Coords) const
 {
-	const bool South	= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y - 1, Coords.Z)));
-	const bool North	= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y + 1, Coords.Z)) && (Coords.Y + 1 <= ChunkSize) );
-	const bool West		= ( !IsBlockAtCoords(FVector(Coords.X - 1, Coords.Y, Coords.Z)));
-	const bool East		= ( !IsBlockAtCoords(FVector(Coords.X + 1, Coords.Y, Coords.Z)) && (Coords.X + 1 <= ChunkSize) );
-	const bool Top		= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y, Coords.Z + 1)) );
-	const bool Bottom	= ( !IsBlockAtCoords(FVector(Coords.X, Coords.Y, Coords.Z - 1)) && (Coords.Z - 1 >= 0) );
-		
-	const TArray<bool> BlockFaceVisibility{South, North, West, East, Top, Bottom};
+	TArray<bool> BlockFaceVisibility;
+	BlockFaceVisibility.Reserve(6);
 
+	const int32 X = Coords.X;
+	const int32 Y = Coords.Y;
+	const int32 Z = Coords.Z;
+    
+	BlockFaceVisibility.Add(!IsBlockAtCoords(X, Y - 1, Z));
+	BlockFaceVisibility.Add((Y + 1 <= ChunkSize) && !IsBlockAtCoords(X, Y + 1, Z));
+	BlockFaceVisibility.Add(!IsBlockAtCoords(X - 1, Y, Z));
+	BlockFaceVisibility.Add((X + 1 <= ChunkSize) && !IsBlockAtCoords(X + 1, Y, Z));
+	BlockFaceVisibility.Add(!IsBlockAtCoords(X, Y, Z + 1));
+	BlockFaceVisibility.Add((Z - 1 >= 0) && !IsBlockAtCoords(X, Y, Z - 1));
+    
 	return BlockFaceVisibility;
 }
 

@@ -49,13 +49,7 @@ static TArray<FVector> FaceNormals = {
 
 static const TArray<FVector>& GetCubeVertices(const float HalfBlockSize)
 {
-	static TArray<FVector> CubeVertices;
-
-	static bool bInitialized = false;
-    
-	if (!bInitialized)
-	{
-		CubeVertices = {
+	static const TArray<FVector> CubeVertices{
 			FVector(-HalfBlockSize, -HalfBlockSize, -HalfBlockSize), // Front-bottom-left
 			FVector(HalfBlockSize, -HalfBlockSize, -HalfBlockSize),  // Front-bottom-right
 			FVector(HalfBlockSize, -HalfBlockSize, HalfBlockSize),   // Front-top-right
@@ -65,8 +59,5 @@ static const TArray<FVector>& GetCubeVertices(const float HalfBlockSize)
 			FVector(HalfBlockSize, HalfBlockSize, HalfBlockSize),    // Back-top-right
 			FVector(-HalfBlockSize, HalfBlockSize, HalfBlockSize)    // Back-top-left
 		};
-		bInitialized = true;
-	}
-    
 	return CubeVertices;
 }
