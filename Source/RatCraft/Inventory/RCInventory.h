@@ -31,7 +31,7 @@ public:
 
 	EBlockType GetCurrentlyHoldingBlockType();
 	uint8 GetInventoryCapacity() const { return InventoryCapacity; }
-	
+	uint8 GetMaxStackSize() const { return MaxStackSize; }
 private:
 	struct FRCInventoryItem* GetItem(const EBlockType BlockType);
 	

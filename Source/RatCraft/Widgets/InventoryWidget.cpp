@@ -22,11 +22,12 @@ void UInventoryWidget::NativeConstruct()
 
 			PlayerInventory->OnUpdateSelectedSlot.AddUObject(this, &UInventoryWidget::UpdateSelectedSlot);
 			
-			const uint8 Capacity = PlayerInventory->GetInventoryCapacity();
-
+			InventoryCapacity = PlayerInventory->GetInventoryCapacity();
+			MaxStackSize = PlayerInventory->GetMaxStackSize();
+			
 			ItemsContainer->ClearChildren();
 
-			for (uint8 i = 0; i < Capacity; ++i)
+			for (uint8 i = 0; i < InventoryCapacity; ++i)
 			{
 				if (UItemWidget* NewEmptyWidget = CreateWidget<UItemWidget>(GetOwningPlayer(), ItemWidgetClass))
 				{
@@ -35,8 +36,8 @@ void UInventoryWidget::NativeConstruct()
 					ItemWidgets.Add(NewEmptyWidget);
 				}
 			}
-			SelectedItemWidget = ItemWidgets[0];
-			SelectedItemWidget->ChangeSelected(true);
+			SelectedItemSlot = 0;
+			ItemWidgets[SelectedItemSlot]->ChangeSelected(true);
 		}
 	}
 }
@@ -44,52 +45,64 @@ void UInventoryWidget::NativeConstruct()
 void UInventoryWidget::ItemAdded(const struct FRCInventoryItem& InventoryItem)
 {
 	const EBlockType BlockType = InventoryItem.BlockType;
+	
+	if (BlockType == EBlockType::Air)
+		return;
+	
 	UItemWidget* ItemWidget{};
-	if (!PopulatedItemEntryWidgets.Contains(BlockType))
+
+	for (TPair<uint8 /*Slot*/, FRCInventoryItem>& Item : PopulatedItems)
 	{
-		if (UItemWidget* NextAvailableSlot = GetNextAvailableSlot())
+		if (Item.Value.BlockType == BlockType && Item.Value.Count != MaxStackSize)
 		{
-			PopulatedItemEntryWidgets.Add(BlockType, NextAvailableSlot);
-			ItemWidget = NextAvailableSlot;
+			Item.Value.Count = InventoryItem.Count;
+			ItemWidget = ItemWidgets[Item.Key];
+			ItemWidget->UpdateInventoryItem(InventoryItem, InventoryItemsData.FindChecked(BlockType));
+			return;
 		}
 	}
-	else
+
+	if (const uint8 FreeSlot = GetNextAvailableSlot(); FreeSlot != UINT8_MAX)
 	{
-		ItemWidget = PopulatedItemEntryWidgets[BlockType];
+		ItemWidget = ItemWidgets[FreeSlot];
+		const FRCInventoryItem NewInventoryItem = FRCInventoryItem{InventoryItem.BlockType, InventoryItem.Count};
+		PopulatedItems.Add(FreeSlot, NewInventoryItem);
+		ItemWidget->UpdateInventoryItem(InventoryItem, InventoryItemsData.FindChecked(BlockType));
 	}
-	ItemWidget->UpdateInventoryItem(InventoryItem, InventoryItemsData.FindChecked(BlockType));
 }
 
 void UInventoryWidget::ItemRemove(const struct FRCInventoryItem& InventoryItem)
 {
-	SelectedItemWidget->UpdateInventoryItem(InventoryItem, InventoryItemsData.FindChecked(InventoryItem.BlockType));
+   	ItemWidgets[SelectedItemSlot]->UpdateInventoryItem(InventoryItem, InventoryItemsData.FindChecked(InventoryItem.BlockType));
+	if (PopulatedItems.Contains(SelectedItemSlot))
+	{
+		if (InventoryItem.BlockType == EBlockType::Air)
+			PopulatedItems[SelectedItemSlot] = FRCInventoryItem{};
+		PopulatedItems[SelectedItemSlot].Count = InventoryItem.Count;
+	}
 }
 
 void UInventoryWidget::UpdateSelectedSlot(const uint8 SelectedSlot)
 {
-	if (SelectedSlot < 0 || SelectedSlot >= ItemWidgets.Num())
+	if (SelectedSlot < 0 || SelectedSlot >= InventoryCapacity)
 		return;
+
+	ItemWidgets[SelectedItemSlot]->ChangeSelected(false);
 	
+	SelectedItemSlot = SelectedSlot;
 	UItemWidget* ItemWidget = ItemWidgets[SelectedSlot];
-	if (SelectedItemWidget == ItemWidget)
-		return;
-	if (!SelectedItemWidget)
+	if (!ItemWidget)
 		return;
 	
-	SelectedItemWidget->ChangeSelected(false);
-	SelectedItemWidget = ItemWidget;
 	ItemWidget->ChangeSelected(true);
 }
 
-UItemWidget* UInventoryWidget::GetNextAvailableSlot() const
+uint8 UInventoryWidget::GetNextAvailableSlot() const
 {
-	for (UItemWidget* Widget : ItemWidgets)
+	for (uint8 i = 0; i < InventoryCapacity; ++i)
 	{
-		if (Widget->IsEmpty())
-		{
-			return Widget;
-		}
+		if (ItemWidgets[i]->IsEmpty())
+			return i;
 	}
-	
-	return nullptr;
+	return UINT8_MAX;
 }

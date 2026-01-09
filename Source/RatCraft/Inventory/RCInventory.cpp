@@ -22,6 +22,9 @@ void URCInventory::AddItem(const EBlockType BlockType)
 {
 	FRCInventoryItem* Item = GetItem(BlockType);
 
+	if (Item->BlockType == EBlockType::Air)
+		return;
+	
 	if (Item->Count == InvalidCount)
 		return;
 	
@@ -66,7 +69,7 @@ FRCInventoryItem* URCInventory::GetItem(const EBlockType BlockType)
     
 	for (FRCInventoryItem& Item : InventoryStorage)
 	{
-		if (Item.BlockType == BlockType)
+		if (Item.BlockType == BlockType && Item.Count != MaxStackSize)
 		{
 			return &Item;
 		}

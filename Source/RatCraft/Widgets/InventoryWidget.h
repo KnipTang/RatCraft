@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "RatCraft/Inventory/RCInventoryItem.h"
 #include "RatCraft/World/Blocks/RCBlockStatics.h"
 #include "InventoryWidget.generated.h"
 
@@ -29,19 +30,22 @@ private:
 	TSubclassOf<class UItemWidget> ItemWidgetClass;
 	UPROPERTY()
 	TArray<class UItemWidget*> ItemWidgets;
+	UPROPERTY()
+	uint8 SelectedItemSlot;
 
 	UPROPERTY()
-	TMap<TEnumAsByte<EBlockType>, class UItemWidget*> PopulatedItemEntryWidgets;
+	TMap<uint8 /*Slot*/, FRCInventoryItem> PopulatedItems;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
 	TMap<TEnumAsByte<EBlockType>, class URC_DataAssetBlockInventory*> InventoryItemsData;
+
+	uint8 InventoryCapacity;
+	uint8 MaxStackSize;
 
 	void ItemAdded(const struct FRCInventoryItem& InventoryItem);
 	void ItemRemove(const struct FRCInventoryItem& InventoryItem);
 
 	void UpdateSelectedSlot(const uint8 SelectedSlot);
-	UPROPERTY()
-	class UItemWidget* SelectedItemWidget;
 
-	class UItemWidget* GetNextAvailableSlot() const;
+	uint8 GetNextAvailableSlot() const;
 };
