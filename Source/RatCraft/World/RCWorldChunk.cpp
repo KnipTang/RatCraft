@@ -25,10 +25,10 @@ void ARCWorldChunk::Init(ARCWorldManager* InWorldManager)
 	WorldManager = InWorldManager;
 	WorldSettings = URCWorldSettings::GetSettings();
 
-	TotalBlocks = ChunkSize * ChunkSize * WorldSettings->ChunkHeight;
 	ChunkSize = WorldSettings->ChunkSize;
 	ChunkSizeWithBorder = WorldSettings->ChunkSize + 2;
 	ChunkHeight = WorldSettings->ChunkHeight;
+	TotalBlocks = ChunkSize * ChunkSize * ChunkHeight;
 	BlockSize = WorldSettings->BlockSize;
 	HalfBlockSize = WorldSettings->GetHalfBlockSize();
 	RockLevel = WorldSettings->RockLevel;
