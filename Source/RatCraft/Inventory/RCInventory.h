@@ -7,8 +7,8 @@
 #include "RatCraft/World/Blocks/RCBlockStatics.h"
 #include "RCInventory.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemAddedDelegate, const class URCInventoryItem* /*ItemToGrant*/)
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemRemovedDelegate, const class URCInventoryItem* /*ItemToRemove*/)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemAddedDelegate, const struct FRCInventoryItem& /*ItemToGrant*/)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemRemovedDelegate, const struct FRCInventoryItem& /*ItemToRemove*/)
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnUpdateSelectedSlotDelegate, const uint8 CurrentlySelectedSlot /*SelectedSlot*/)
 
 UCLASS()
@@ -33,10 +33,10 @@ public:
 	uint8 GetInventoryCapacity() const { return InventoryCapacity; }
 	
 private:
-	class URCInventoryItem* GetItem(const EBlockType BlockType);
+	struct FRCInventoryItem* GetItem(const EBlockType BlockType);
 	
 	UPROPERTY()
-	TArray<class URCInventoryItem*> InventoryStorage;
+	TArray<struct FRCInventoryItem> InventoryStorage;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
 	uint8 InventoryCapacity = 4;

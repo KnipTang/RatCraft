@@ -13,22 +13,25 @@
 void UItemWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
-	ItemIcon->SetVisibility(ESlateVisibility::Hidden);
-	ItemCount->SetVisibility(ESlateVisibility::Hidden);
+	SetIcon(nullptr);
+	SetCount(0);
+	ChangeSelected(false);
+	InventoryItem = FRCInventoryItem{};
 	EmptySlot();
 }
 
-void UItemWidget::UpdateInventoryItem(const URCInventoryItem* InInventoryItem, const URC_DataAssetBlockInventory* DataAsset)
+void UItemWidget::UpdateInventoryItem(const struct FRCInventoryItem& InInventoryItem,
+	const class URC_DataAssetBlockInventory* DataAsset)
 {
 	InventoryItem = InInventoryItem;
-	if (!InventoryItem)
+	if (IsEmpty())
 	{
 		EmptySlot();
 		return;
 	}
 
 	SetIcon(DataAsset->GetIcon());
-	SetCount(InInventoryItem->Count);
+	SetCount(InventoryItem.Count);
 }
 
 void UItemWidget::ChangeSelected(const bool bSelected) const
@@ -38,18 +41,14 @@ void UItemWidget::ChangeSelected(const bool bSelected) const
 
 bool UItemWidget::IsEmpty() const
 {
-	return !InventoryItem || InventoryItem->BlockType == EBlockType::Air;
+	return InventoryItem.BlockType == EBlockType::Air;
 }
 
 void UItemWidget::EmptySlot()
 {
-	InventoryItem = nullptr;
+	InventoryItem.BlockType = EBlockType::Air;
 	SetIcon(EmptyTexture);
-}
-
-void UItemWidget::SetSlotNumber(const uint8 NewSlotNumber)
-{
-	SlotNumber = NewSlotNumber;
+	SetCount(0);
 }
 
 void UItemWidget::SetIcon(UTexture2D* IconTexture) const

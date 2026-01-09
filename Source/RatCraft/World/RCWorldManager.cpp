@@ -30,8 +30,7 @@ void ARCWorldManager::BeginPlay()
 	};
 
 	WorldSettings->SeedOffset = InSeedOffset;
-
-	//Fill in random
+	
 	CurrentlyStandOnChunkCoords = FVector2D(-CHAR_MAX, CHAR_MIN);
 	
 	for (int8 x = -WorldSettings->InitChunksLoadedRange; x < WorldSettings->InitChunksLoadedRange; x++)

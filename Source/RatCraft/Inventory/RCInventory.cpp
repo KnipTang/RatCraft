@@ -10,18 +10,17 @@ void URCInventory::Init()
 {
 	for (uint8 i = 0; i < InventoryCapacity; i++)
 	{
-		URCInventoryItem* Item = NewObject<URCInventoryItem>(this);
-		Item->Init(
-			EBlockType::Air, 0, i
-			);
-		OnItemAdded.Broadcast(Item);
-		InventoryStorage.Emplace(Item);
+		FRCInventoryItem NewItem{
+			EBlockType::Air, 0
+			};
+		OnItemAdded.Broadcast(NewItem);
+		InventoryStorage.Emplace(NewItem);
 	}
 }
 
 void URCInventory::AddItem(const EBlockType BlockType)
 {
-	URCInventoryItem* Item = GetItem(BlockType);
+	FRCInventoryItem* Item = GetItem(BlockType);
 
 	if (Item->Count == InvalidCount)
 		return;
@@ -29,21 +28,21 @@ void URCInventory::AddItem(const EBlockType BlockType)
 	if (Item->Count < MaxStackSize)
 		Item->Count += 1;
 
-	OnItemAdded.Broadcast(Item);
+	OnItemAdded.Broadcast(*Item);
 }
 
 void URCInventory::RemoveItem()
 {
-	URCInventoryItem* Item = InventoryStorage[CurrentlySelectedSlot];
+	FRCInventoryItem* Item = &InventoryStorage[CurrentlySelectedSlot];
 
 	Item->Count--;
-	
-	OnItemRemoved.Broadcast(Item);
 	
 	if (Item->Count <= 0)
 	{
 		Item->BlockType = EBlockType::Air;
 	}
+	
+	OnItemRemoved.Broadcast(*Item);
 }
 
 void URCInventory::UpdateSelectedSlot(const int8 UpdateValue)
@@ -58,23 +57,30 @@ void URCInventory::UpdateSelectedSlot(const int8 UpdateValue)
 
 EBlockType URCInventory::GetCurrentlyHoldingBlockType()
 {
-	return InventoryStorage[CurrentlySelectedSlot]->BlockType;
+	return InventoryStorage[CurrentlySelectedSlot].BlockType;
 }
 
-URCInventoryItem* URCInventory::GetItem(const EBlockType BlockType)
+FRCInventoryItem* URCInventory::GetItem(const EBlockType BlockType)
 {
-	for (URCInventoryItem* Item : InventoryStorage)
+	FRCInventoryItem* FirstEmptySlot{};
+    
+	for (FRCInventoryItem& Item : InventoryStorage)
 	{
-		if (Item->BlockType == BlockType)
-			return Item;
-	}
-	for (URCInventoryItem* Item : InventoryStorage)
-	{
-		if (Item->BlockType == BlockTypesCount)
+		if (Item.BlockType == BlockType)
 		{
-			Item->BlockType = BlockType;
-			return Item;
+			return &Item;
 		}
+		
+		if (!FirstEmptySlot && Item.BlockType == EBlockType::Air)
+		{
+			FirstEmptySlot = &Item;
+		}
+	}
+	if (FirstEmptySlot)
+	{
+		FirstEmptySlot->BlockType = BlockType;
+		FirstEmptySlot->Count = 0;
+		return FirstEmptySlot;
 	}
 
 	return nullptr;

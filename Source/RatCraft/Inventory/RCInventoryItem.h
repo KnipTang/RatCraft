@@ -8,20 +8,21 @@
 /**
  * 
  */
-UCLASS()
-class RATCRAFT_API URCInventoryItem : public UObject
+USTRUCT()
+struct RATCRAFT_API FRCInventoryItem
 {
 	GENERATED_BODY()
 
 public:
-	void Init(EBlockType InBlockType, int8 InCount, int8 InInventorySlot)
-	{
-		BlockType = InBlockType;
-		Count = InCount;
-		InventorySlot = InInventorySlot;
-	}
+	FRCInventoryItem() :
+		BlockType(EBlockType::Air),
+		Count(0)
+	{}
+	FRCInventoryItem(EBlockType InBlockType, uint8 InCount) :
+		BlockType(InBlockType),
+		Count(InCount)
+	{}
 	
 	EBlockType BlockType;
-	int8 Count;
-	int8 InventorySlot;
+	uint8 Count;
 };

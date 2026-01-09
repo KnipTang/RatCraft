@@ -36,8 +36,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
 	TMap<TEnumAsByte<EBlockType>, class URC_DataAssetBlockInventory*> InventoryItemsData;
 
-	void ItemAdded(const class URCInventoryItem* InventoryItem);
-	void ItemRemove(const class URCInventoryItem* InventoryItem);
+	void ItemAdded(const struct FRCInventoryItem& InventoryItem);
+	void ItemRemove(const struct FRCInventoryItem& InventoryItem);
 
 	void UpdateSelectedSlot(const uint8 SelectedSlot);
 	UPROPERTY()

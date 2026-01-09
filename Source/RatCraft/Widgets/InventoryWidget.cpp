@@ -30,7 +30,6 @@ void UInventoryWidget::NativeConstruct()
 			{
 				if (UItemWidget* NewEmptyWidget = CreateWidget<UItemWidget>(GetOwningPlayer(), ItemWidgetClass))
 				{
-					NewEmptyWidget->SetSlotNumber(i);
 					UWrapBoxSlot* NewItemSlot = ItemsContainer->AddChildToWrapBox(NewEmptyWidget);
 					NewItemSlot->SetPadding(FMargin(2.f));
 					ItemWidgets.Add(NewEmptyWidget);
@@ -42,9 +41,9 @@ void UInventoryWidget::NativeConstruct()
 	}
 }
 
-void UInventoryWidget::ItemAdded(const class URCInventoryItem* InventoryItem)
+void UInventoryWidget::ItemAdded(const struct FRCInventoryItem& InventoryItem)
 {
-	const EBlockType BlockType = InventoryItem->BlockType;
+	const EBlockType BlockType = InventoryItem.BlockType;
 	UItemWidget* ItemWidget{};
 	if (!PopulatedItemEntryWidgets.Contains(BlockType))
 	{
@@ -61,19 +60,9 @@ void UInventoryWidget::ItemAdded(const class URCInventoryItem* InventoryItem)
 	ItemWidget->UpdateInventoryItem(InventoryItem, InventoryItemsData.FindChecked(BlockType));
 }
 
-void UInventoryWidget::ItemRemove(const class URCInventoryItem* InventoryItem)
+void UInventoryWidget::ItemRemove(const struct FRCInventoryItem& InventoryItem)
 {
-	EBlockType BlockType = InventoryItem->BlockType;
-	if (PopulatedItemEntryWidgets.Contains(BlockType))
-	{
-		UItemWidget* ItemWidget = PopulatedItemEntryWidgets[BlockType];
-
-		if (InventoryItem->Count <= 0)
-		{
-			BlockType = EBlockType::Air;
-		}
-		ItemWidget->UpdateInventoryItem(InventoryItem, InventoryItemsData.FindChecked(BlockType));
-	}
+	SelectedItemWidget->UpdateInventoryItem(InventoryItem, InventoryItemsData.FindChecked(InventoryItem.BlockType));
 }
 
 void UInventoryWidget::UpdateSelectedSlot(const uint8 SelectedSlot)

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "RatCraft/Inventory/RCInventory.h"
+#include "RatCraft/Inventory/RCInventoryItem.h"
 #include "ItemWidget.generated.h"
 
 /**
@@ -18,11 +19,10 @@ class RATCRAFT_API UItemWidget : public UUserWidget
 public:
 	virtual void NativeConstruct() override;
 
-	void UpdateInventoryItem(const class URCInventoryItem* InInventoryItem, const class URC_DataAssetBlockInventory* DataAsset);
+	void UpdateInventoryItem(const struct FRCInventoryItem& InInventoryItem, const class URC_DataAssetBlockInventory* DataAsset);
 	
 	bool IsEmpty() const;
 	void EmptySlot();
-	void SetSlotNumber(uint8 NewSlotNumber);
 	void SetIcon(UTexture2D* IconTexture) const;
 	void SetCount(uint8 Count) const;
 
@@ -43,8 +43,5 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Visual")
 	class UTexture2D* EmptyTexture;
 
-	UPROPERTY()
-	const class URCInventoryItem* InventoryItem;
-	
-	int SlotNumber;
+	FRCInventoryItem InventoryItem;
 };
