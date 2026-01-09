@@ -43,6 +43,8 @@ private:
 	
 	void HandleChunkLoading(const FVector* PlayerGridCoords);
 
+	FVector2D GetChunkCoordsFromWorldCoords(int X, int Y) const;
+
 	UPROPERTY()
 	const class URCWorldSettings* WorldSettings;
 
@@ -62,19 +64,15 @@ private:
 	UPROPERTY()
 	TArray<class ARCWorldChunk*> RenderedChunks;
 
+	FActorSpawnParameters SpawnParams;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "World Management")
 	float UpdateWorldRenderCooldown = 1.f;
 	FTimerHandle UpdateWorldRenderTimerHandle;
-
-	FActorSpawnParameters SpawnParams;
 	
 	/***************************************************/
 	/*					Interacting						/
 	/***************************************************/
-	void LookAtChunkChanged(class ARCWorldChunk* NewChunk);
-
-	void StartCanPlaceBlockTimer();
-	
 	UPROPERTY()
 	class ARCWorldChunk* CurrentlyLookAtChunk;
 	UPROPERTY()
@@ -82,6 +80,8 @@ private:
 	bool bIsLookingAtChunk;
 	FVector LookAtBlockNormal;
 	FVector LookAtBlockCoords;
+	
+	void LookAtChunkChanged(class ARCWorldChunk* NewChunk);
 
 	//BLOCK PLACEMENT
 	bool bCanPlaceBlock = true;
@@ -89,11 +89,10 @@ private:
 	float BlockPlacedCooldown = 0.1f;
 	FTimerHandle BlockPlacedTimerHandle;
 	
+	void StartCanPlaceBlockTimer();
 	bool CanSpawnBlockAtGridCoords(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight) const;
 	bool IsPlayerObstructing(const FVector& NewBlockGridCoords, const FVector& PlayerGridCoords, float ColliderSize, float ColliderHeight) const;
 	
-	FVector2D GetChunkCoordsFromWorldCoords(int X, int Y) const;
-
 	//WIREFRAME
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class ARCBlock> WireframeBlockClass;

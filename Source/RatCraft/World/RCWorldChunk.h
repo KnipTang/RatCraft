@@ -56,15 +56,23 @@ private:
 	
 	bool UpdateChunkBlocksDataAtBlockCoords(const EBlockType BlockTypeToSpawn, const FVector& BlockCoords);
 	void CheckIfChunkBorderCubeGotUpdated(const EBlockType UpdatedBlockType, const int8 X, const int8 Y, const int8 Z) const;
-	
+
+	void LookAtBlockChanged();
+private:
 	//MINING
 	void OnBlockMined();
 	void UpdateMiningProgress();
 	UPROPERTY()
 	class URCDataAssetBlock* CurrentMiningBlockData;
-
-	void LookAtBlockChanged();
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Setting")
+	float MiningUpdateInterval = 0.1f;
+	FTimerHandle MiningTimerHandle;
+	
+	float CurrentMinedTime;
+	bool bIsMining;
+
+private:
 	//GETTERS
 	int32 GetBlockIndex(int8 X, int8 Y, int8 Z) const;
 	EBlockType GetBlockType(int8 X, int8 Y, int8 Z) const;
@@ -72,7 +80,7 @@ private:
 	uint8 GetNoiseHeightAt(int8 X, int8 Z);
 	TArray<float> GeneratePerlinNoise() const;
 	
-	TArray<bool> GetBlockFaceVisibilityFromCoords(const FVector& Coords) const;
+	uint8 GetBlockFaceBitmaskVisibility(int8 X, int8 Y, int8 Z) const;
 	FVector GetLocalGridCoords(const FVector& GridCoords) const;
 
 	bool IsBlockAtCoords(const int8 X, const int8 Y, const int8 Z) const;
@@ -92,7 +100,7 @@ private:
 	bool bIsRendered = true;
 	bool bIsCollision = true;
 	
-	TArray<EBlockType> ChunkBlocksData;
+	TArray<TEnumAsByte<EBlockType>> ChunkBlocksData;
 	TArray<FChunkMesh> ChunkMeshes;
 
 	FVector LookAtBlockCoords;
@@ -101,14 +109,6 @@ private:
 
 	FVector ChunkWorldCoords;
 	FVector2D ChunkGridCoords;
-	
-	//Mining
-	UPROPERTY(EditDefaultsOnly, Category = "Setting")
-	float MiningUpdateInterval = 0.1f;
-	FTimerHandle MiningTimerHandle;
-	
-	float CurrentMinedTime;
-	bool bIsMining;
 
 	//Cached values
 	int32 TotalBlocks;

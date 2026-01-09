@@ -47,6 +47,13 @@ static TArray<FVector> FaceNormals = {
 	FVector(0, 0, -1)   // Bottom
 };
 
+static const FVector2D FaceUVs[4] = {
+	FVector2D(0, 1),
+	FVector2D(1, 1),
+	FVector2D(1, 0),
+	FVector2D(0, 0)
+};
+
 static const TArray<FVector>& GetCubeVertices(const float HalfBlockSize)
 {
 	static const TArray<FVector> CubeVertices{

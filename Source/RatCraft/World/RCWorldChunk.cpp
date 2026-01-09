@@ -111,11 +111,6 @@ void ARCWorldChunk::RenderChunk()
 		{
 			for (int32 Z = 0; Z < ChunkHeight; Z++)
 			{
-				if (X == -1 || Y == -1 || 
-					X == ChunkSize || 
-					Y == ChunkSize)
-					continue;
-				
 				const int32 Index = GetBlockIndex(X, Y, Z);
 				if (Index >= ChunkBlocksData.Num())
 					continue;
@@ -134,8 +129,8 @@ void ARCWorldChunk::RenderChunk()
 
 void ARCWorldChunk::GenerateBlockFaces(const EBlockType& BlockType, const FVector& BlockCoords)
 {
-	const TArray<bool> BlockFaceVisibility = GetBlockFaceVisibilityFromCoords(BlockCoords);
-	if (BlockFaceVisibility.Num() == 0)
+	const uint8 FaceBitmask = GetBlockFaceBitmaskVisibility(BlockCoords.X, BlockCoords.Y, BlockCoords.Z);
+	if (FaceBitmask == 0)
 		return;
 	
 	const uint8 MaterialIndex = ToUInt8(BlockType);
@@ -148,7 +143,7 @@ void ARCWorldChunk::GenerateBlockFaces(const EBlockType& BlockType, const FVecto
 
 	for (uint8 FaceIndex = 0; FaceIndex < Faces.Num(); FaceIndex++)
 	{
-		if (!BlockFaceVisibility[FaceIndex])
+		if (!(FaceBitmask & (1 << FaceIndex)))
 			continue;
 		
 		const TArray<uint8>& Face = Faces[FaceIndex];
@@ -157,12 +152,7 @@ void ARCWorldChunk::GenerateBlockFaces(const EBlockType& BlockType, const FVecto
 		for (uint8 i = 0; i < 4; i++)
 		{
 			Vertices.Add(GetCubeVertices(HalfBlockSize)[Face[i]] + (BlockCoords * BlockSize) + HalfBlockSize);
-        	
-			if (i == 0) UVs.Add(FVector2D(0, 1));
-			else if (i == 1) UVs.Add(FVector2D(1, 1));
-			else if (i == 2) UVs.Add(FVector2D(1, 0));
-			else UVs.Add(FVector2D(0, 0));
-        	
+			UVs.Add(FaceUVs[i]);
 			VertexColors.Emplace(255, 255, 255, FaceIndex);
 			Normals.Add(FaceNormals[FaceIndex]);
 		}
@@ -386,23 +376,18 @@ bool ARCWorldChunk::IsBlockAtCoords(const int8 X, const int8 Y, const int8 Z) co
 	return true;
 }
 
-TArray<bool> ARCWorldChunk::GetBlockFaceVisibilityFromCoords(const FVector& Coords) const
+uint8 ARCWorldChunk::GetBlockFaceBitmaskVisibility(int8 X, int8 Y, int8 Z) const
 {
-	TArray<bool> BlockFaceVisibility;
-	BlockFaceVisibility.Reserve(6);
-
-	const int32 X = Coords.X;
-	const int32 Y = Coords.Y;
-	const int32 Z = Coords.Z;
+	uint8 Bitmask = 0;
+	
+	if (!IsBlockAtCoords(X, Y - 1, Z))						Bitmask |= 0x01;
+	if (Y + 1 <= ChunkSize && !IsBlockAtCoords(X, Y + 1, Z)) Bitmask |= 0x02;
+	if (!IsBlockAtCoords(X - 1, Y, Z))						Bitmask |= 0x04;
+	if (X + 1 <= ChunkSize && !IsBlockAtCoords(X + 1, Y, Z)) Bitmask |= 0x08;
+	if (!IsBlockAtCoords(X, Y, Z + 1))						Bitmask |= 0x10;
+	if (Z - 1 >= 0 && !IsBlockAtCoords(X, Y, Z - 1))				Bitmask |= 0x20;
     
-	BlockFaceVisibility.Add(!IsBlockAtCoords(X, Y - 1, Z));
-	BlockFaceVisibility.Add((Y + 1 <= ChunkSize) && !IsBlockAtCoords(X, Y + 1, Z));
-	BlockFaceVisibility.Add(!IsBlockAtCoords(X - 1, Y, Z));
-	BlockFaceVisibility.Add((X + 1 <= ChunkSize) && !IsBlockAtCoords(X + 1, Y, Z));
-	BlockFaceVisibility.Add(!IsBlockAtCoords(X, Y, Z + 1));
-	BlockFaceVisibility.Add((Z - 1 >= 0) && !IsBlockAtCoords(X, Y, Z - 1));
-    
-	return BlockFaceVisibility;
+	return Bitmask;
 }
 
 FVector ARCWorldChunk::GetLocalGridCoords(const FVector& GridCoords) const
