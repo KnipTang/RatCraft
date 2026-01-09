@@ -145,6 +145,8 @@ void ARCPlayerCharacter::HandlePlaceInput(const FInputActionValue& InputActionVa
 	if (InputActionValue.Get<bool>())
 	{
 		const EBlockType BlockTypeToSpawn = Inventory->GetCurrentlyHoldingBlockType();
+		if (BlockTypeToSpawn == EBlockType::Air)
+			return;
 		bool bSucceeded = WorldManager->SpawnBlock(BlockTypeToSpawn, PlayerGridCoords, GetCapsuleComponent()->GetScaledCapsuleRadius(), GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 
 		if (bSucceeded)

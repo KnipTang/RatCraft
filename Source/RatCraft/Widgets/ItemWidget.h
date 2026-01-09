@@ -22,8 +22,9 @@ public:
 	
 	bool IsEmpty() const;
 	void EmptySlot();
-	void SetSlotNumber(int NewSlotNumber);
-	virtual void SetIcon(UTexture2D* IconTexture);
+	void SetSlotNumber(uint8 NewSlotNumber);
+	void SetIcon(UTexture2D* IconTexture) const;
+	void SetCount(uint8 Count) const;
 
 	void ChangeSelected(bool bSelected) const;
 private:
@@ -31,6 +32,8 @@ private:
 	class UBorder* Background;
 	UPROPERTY(meta=(bindWidget))
 	class UImage* ItemIcon;
+	UPROPERTY(meta=(bindWidget))
+    class UTextBlock* ItemCount;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Visual")
 	FLinearColor ColorBackgroundUnselected;

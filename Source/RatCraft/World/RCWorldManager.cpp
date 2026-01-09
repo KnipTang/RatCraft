@@ -169,7 +169,7 @@ void ARCWorldManager::OnBlockMined(const EBlockType BlockType) const
 
 bool ARCWorldManager::SpawnBlock(const EBlockType BlockType, const FVector& PlayerGridCoords, const float ColliderSize, const float ColliderHeight)
 {
-	if (!bCanPlaceBlock)
+	if (!bCanPlaceBlock || !bIsLookingAtChunk)
 		return false;
 
 	if (BlockType == EBlockType::Air)
