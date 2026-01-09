@@ -38,7 +38,6 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 private:
-	void RenderChunk(const FVector2D& Coords);
 	ARCWorldChunk* AddChunk(int X, int Y);
 	
 	void HandleChunkLoading(const FVector* PlayerGridCoords);
@@ -62,7 +61,7 @@ private:
 	UPROPERTY()
 	TMap<FVector2D, class ARCWorldChunk*> AllChunks;
 	UPROPERTY()
-	TArray<class ARCWorldChunk*> RenderedChunks;
+	TArray<FVector2D> RenderedChunks;
 
 	FActorSpawnParameters SpawnParams;
 	

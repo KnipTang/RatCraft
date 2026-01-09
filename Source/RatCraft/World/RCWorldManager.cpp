@@ -8,6 +8,7 @@
 #include "Blocks/RCDataAssetBlock.h"
 #include "RatCraft/Abilities/RCAbilitySystemStatics.h"
 #include "RatCraft/Inventory/RCInventory.h"
+#include "HAL/PlatformTime.h"
 
 ARCWorldManager::ARCWorldManager()
 {
@@ -87,42 +88,45 @@ void ARCWorldManager::HandleChunkLoading(const FVector* PlayerGridCoords)
 	if (CurrentlyStandOnChunkCoords == ChunkCoords)
 		return;
 
-	for (ARCWorldChunk* Chunk : RenderedChunks)
-	{
-		Chunk->SetRender(false);
-	}
-	
-	RenderedChunks.Empty();
-	
-	CurrentlyStandOnChunkCoords = ChunkCoords;
-
-	uint8 ChunkDistance = WorldSettings->RenderDistance / WorldSettings->ChunkSize;
-	ChunkDistance++;
-	
+	TSet<FVector2D> NewRenderSet;
+	const uint8 ChunkDistance = WorldSettings->RenderDistance / WorldSettings->ChunkSize;
+    
 	for (int8 x = -ChunkDistance; x <= ChunkDistance; x++)
 	{
 		for (int8 y = -ChunkDistance; y <= ChunkDistance; y++)
 		{
-			RenderChunk(FVector2D(ChunkCoords.X + x, ChunkCoords.Y + y));
+			NewRenderSet.Add(FVector2D(ChunkCoords.X + x, ChunkCoords.Y + y));
 		}
 	}
-}
-
-void ARCWorldManager::RenderChunk(const FVector2D& Coords)
-{
-	ARCWorldChunk* RenderedChunk;
-	if (!AllChunks.Contains(Coords))
+	for (auto It = RenderedChunks.CreateIterator(); It; ++It)
 	{
-		RenderedChunk = AddChunk(Coords.X, Coords.Y);
+		if (!NewRenderSet.Contains(*It))
+		{
+			if (!AllChunks.Contains(*It))
+			{
+				AllChunks[*It]->SetRender(false);
+			}
+			It.RemoveCurrent();
+		}
 	}
-	else
+	for (const FVector2D& Coords : NewRenderSet)
 	{
-		RenderedChunk = AllChunks.FindChecked(Coords);
+		ARCWorldChunk* Chunk;
+		if (!AllChunks.Contains(Coords))
+		{
+			Chunk = AddChunk(Coords.X, Coords.Y);
+			Chunk->SetRender(true);
+			continue;
+		}
+		else if (!RenderedChunks.Contains(Coords))
+		{
+			RenderedChunks.Emplace(Coords);
+		}
+		Chunk = AllChunks[Coords];
+		Chunk->SetRender(true);
 	}
-	
-	RenderedChunks.Emplace(RenderedChunk);
-	
-	RenderedChunk->SetRender(true);
+    
+	CurrentlyStandOnChunkCoords = ChunkCoords;
 }
 
 ARCWorldChunk* ARCWorldManager::AddChunk(const int X, const int Y)
