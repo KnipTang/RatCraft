@@ -115,9 +115,8 @@ void ARCWorldManager::HandleChunkLoading(const FVector* PlayerGridCoords)
 		{
 			Chunk = AddChunk(Coords.X, Coords.Y);
 			Chunk->SetRender(true);
-			continue;
 		}
-		else if (!RenderedChunks.Contains(Coords))
+		if (!RenderedChunks.Contains(Coords))
 		{
 			RenderedChunks.Emplace(Coords);
 		}
@@ -232,6 +231,10 @@ void ARCWorldManager::UpdateInteractableChunk(const float InteractDistance, cons
 	if (!HitResult.GetActor())
 	{
 		bIsLookingAtChunk = false;
+		if (CurrentlyLookAtChunk && CurrentlyLookAtChunk->IsMining())
+		{
+			CurrentlyLookAtChunk->StopMining();
+		}
 		return;
 	}
 
