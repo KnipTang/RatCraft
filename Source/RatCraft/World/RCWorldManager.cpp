@@ -9,6 +9,8 @@
 #include "RatCraft/Abilities/RCAbilitySystemStatics.h"
 #include "RatCraft/Inventory/RCInventory.h"
 #include "HAL/PlatformTime.h"
+//#pragma optimize("", off)
+
 
 ARCWorldManager::ARCWorldManager()
 {
@@ -81,20 +83,30 @@ void ARCWorldManager::EnableChunkLoading(const FVector* PlayerGridCoords)
 	);
 }
 
+bool ARCWorldManager::DidChunkChange(const FVector2D& ChunkCoords)
+{
+	if (CurrentlyStandOnChunkCoords == ChunkCoords)
+		return false;
+	return true;
+}
+
 void ARCWorldManager::HandleChunkLoading(const FVector* PlayerGridCoords)
 {
 	const FVector2D ChunkCoords = GetChunkCoordsFromWorldCoords(PlayerGridCoords->X, PlayerGridCoords->Y);
-	if (CurrentlyStandOnChunkCoords == ChunkCoords)
-		return;
-
-	TSet<FVector2D> NewRenderSet;
+	if (!DidChunkChange(ChunkCoords)) return;
+	
+	//SCOPE_CYCLE_COUNTER(STAT_HandleChunkLoading);
+	
 	const uint8 ChunkDistance = WorldSettings->RenderDistance / WorldSettings->ChunkSize;
+	const uint8 DoubleChunkDistance = ChunkDistance * 2;
+	TArray<FVector2D> NewRenderSet;
+	NewRenderSet.SetNum((DoubleChunkDistance + 1) * (DoubleChunkDistance + 1));
     
-	for (int8 x = -ChunkDistance; x <= ChunkDistance; x++)
+	for (int8 x = 0; x <= DoubleChunkDistance; x++)
 	{
-		for (int8 y = -ChunkDistance; y <= ChunkDistance; y++)
+		for (int8 y = 0; y <= DoubleChunkDistance; y++)
 		{
-			NewRenderSet.Add(FVector2D(ChunkCoords.X + x, ChunkCoords.Y + y));
+			NewRenderSet[x + y * (DoubleChunkDistance + 1)] = (FVector2D(ChunkCoords.X + ( x - ChunkDistance ), ChunkCoords.Y + ( y - ChunkDistance )));
 		}
 	}
 	for (auto It = RenderedChunks.CreateIterator(); It; ++It)

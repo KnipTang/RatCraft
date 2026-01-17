@@ -7,6 +7,9 @@
 #include "GameFramework/Actor.h"
 #include "RCWorldManager.generated.h"
 
+	//DECLARE_STATS_GROUP(TEXT("ARCGame"), STATGROUP_ARCGame, STATCAT_Advanced)
+//
+	//DECLARE_CYCLE_STAT(TEXT("HandleChunkLoading"), STAT_HandleChunkLoading, STATGROUP_ARCGame);
 /**
  * 
  */
@@ -14,7 +17,6 @@ UCLASS()
 class RATCRAFT_API ARCWorldManager : public AActor
 {
 	GENERATED_BODY()
-
 public:
 	ARCWorldManager();
 
@@ -41,6 +43,7 @@ private:
 	ARCWorldChunk* AddChunk(int X, int Y);
 	
 	void HandleChunkLoading(const FVector* PlayerGridCoords);
+	bool DidChunkChange(const FVector2D& ChunkCoords);
 
 	FVector2D GetChunkCoordsFromWorldCoords(int X, int Y) const;
 
