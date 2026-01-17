@@ -7,9 +7,9 @@
 #include "GameFramework/Actor.h"
 #include "RCWorldManager.generated.h"
 
-	//DECLARE_STATS_GROUP(TEXT("ARCGame"), STATGROUP_ARCGame, STATCAT_Advanced)
-//
-	//DECLARE_CYCLE_STAT(TEXT("HandleChunkLoading"), STAT_HandleChunkLoading, STATGROUP_ARCGame);
+//DECLARE_STATS_GROUP(TEXT("ARCGame"), STATGROUP_ARCGame, STATCAT_Advanced)
+
+//DECLARE_CYCLE_STAT(TEXT("HandleChunkLoading"), STAT_HandleChunkLoading, STATGROUP_ARCGame);
 /**
  * 
  */
@@ -64,7 +64,11 @@ private:
 	UPROPERTY()
 	TMap<FVector2D, class ARCWorldChunk*> AllChunks;
 	UPROPERTY()
-	TArray<FVector2D> RenderedChunks;
+	TArray<FVector2D> NewRenderSet;
+	TArray<FVector2D> OldRenderSet;
+
+	uint8 ChunkDistance;
+	uint8 DoubleChunkDistance;
 
 	FActorSpawnParameters SpawnParams;
 	

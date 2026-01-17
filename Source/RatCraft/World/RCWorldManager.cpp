@@ -34,6 +34,12 @@ void ARCWorldManager::BeginPlay()
 	WorldSettings->SeedOffset = InSeedOffset;
 	
 	CurrentlyStandOnChunkCoords = FVector2D(-CHAR_MAX, CHAR_MIN);
+
+	ChunkDistance = WorldSettings->RenderDistance / WorldSettings->ChunkSize;
+	DoubleChunkDistance = ChunkDistance * 2;
+	NewRenderSet.SetNum((DoubleChunkDistance + 1) * (DoubleChunkDistance + 1));
+	OldRenderSet.SetNum((DoubleChunkDistance + 1) * (DoubleChunkDistance + 1));
+	OldRenderSet.Init(FVector2D(0,0), OldRenderSet.Num());
 	
 	for (int8 x = -WorldSettings->InitChunksLoadedRange; x < WorldSettings->InitChunksLoadedRange; x++)
 	{
@@ -83,60 +89,50 @@ void ARCWorldManager::EnableChunkLoading(const FVector* PlayerGridCoords)
 	);
 }
 
+void ARCWorldManager::HandleChunkLoading(const FVector* PlayerGridCoords)
+{
+	const FVector2D ChunkCoords = GetChunkCoordsFromWorldCoords(PlayerGridCoords->X, PlayerGridCoords->Y);
+	if (!DidChunkChange(ChunkCoords)) return;
+
+	//SCOPE_CYCLE_COUNTER(STAT_HandleChunkLoading);
+
+	CurrentlyStandOnChunkCoords = ChunkCoords;
+	
+	for (int8 x = 0; x <= DoubleChunkDistance; x++)
+	{
+		for (int8 y = 0; y <= DoubleChunkDistance; y++)
+		{
+			const uint8 Index = x + y * (DoubleChunkDistance + 1);
+			const FVector2D& Coords = FVector2D(ChunkCoords.X + ( x - ChunkDistance ), ChunkCoords.Y + ( y - ChunkDistance ));
+			NewRenderSet[Index] = Coords;
+			if (!AllChunks.Contains(Coords))
+			{
+				AddChunk(Coords.X, Coords.Y);
+			}
+			ARCWorldChunk* Chunk = AllChunks[Coords];
+			Chunk->SetRender(true);
+		}
+	}
+	
+	for (auto It = OldRenderSet.CreateIterator(); It; ++It)
+	{
+		if (!NewRenderSet.Contains(*It))
+		{
+			AllChunks[*It]->SetRender(false);
+		}
+	}
+
+	for (int8 i = 0; i < NewRenderSet.Num(); i++)
+	{
+		OldRenderSet[i] = NewRenderSet[i];
+	}
+}
+
 bool ARCWorldManager::DidChunkChange(const FVector2D& ChunkCoords)
 {
 	if (CurrentlyStandOnChunkCoords == ChunkCoords)
 		return false;
 	return true;
-}
-
-void ARCWorldManager::HandleChunkLoading(const FVector* PlayerGridCoords)
-{
-	const FVector2D ChunkCoords = GetChunkCoordsFromWorldCoords(PlayerGridCoords->X, PlayerGridCoords->Y);
-	if (!DidChunkChange(ChunkCoords)) return;
-	
-	//SCOPE_CYCLE_COUNTER(STAT_HandleChunkLoading);
-	
-	const uint8 ChunkDistance = WorldSettings->RenderDistance / WorldSettings->ChunkSize;
-	const uint8 DoubleChunkDistance = ChunkDistance * 2;
-	TArray<FVector2D> NewRenderSet;
-	NewRenderSet.SetNum((DoubleChunkDistance + 1) * (DoubleChunkDistance + 1));
-    
-	for (int8 x = 0; x <= DoubleChunkDistance; x++)
-	{
-		for (int8 y = 0; y <= DoubleChunkDistance; y++)
-		{
-			NewRenderSet[x + y * (DoubleChunkDistance + 1)] = (FVector2D(ChunkCoords.X + ( x - ChunkDistance ), ChunkCoords.Y + ( y - ChunkDistance )));
-		}
-	}
-	for (auto It = RenderedChunks.CreateIterator(); It; ++It)
-	{
-		if (!NewRenderSet.Contains(*It))
-		{
-			if (AllChunks.Contains(*It))
-			{
-				AllChunks[*It]->SetRender(false);
-			}
-			It.RemoveCurrent();
-		}
-	}
-	for (const FVector2D& Coords : NewRenderSet)
-	{
-		ARCWorldChunk* Chunk;
-		if (!AllChunks.Contains(Coords))
-		{
-			Chunk = AddChunk(Coords.X, Coords.Y);
-			Chunk->SetRender(true);
-		}
-		if (!RenderedChunks.Contains(Coords))
-		{
-			RenderedChunks.Emplace(Coords);
-		}
-		Chunk = AllChunks[Coords];
-		Chunk->SetRender(true);
-	}
-    
-	CurrentlyStandOnChunkCoords = ChunkCoords;
 }
 
 ARCWorldChunk* ARCWorldManager::AddChunk(const int X, const int Y)
